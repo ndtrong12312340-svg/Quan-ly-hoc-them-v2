@@ -53,6 +53,33 @@ const renderMathChildren = (children: React.ReactNode): React.ReactNode => {
 // ==========================================
 // CLIENT-SIDE OCR & GRADING FALLBACK FOR VERCEL
 // ==========================================
+const callGeminiAPI = async (apiKey: string, model: string, payload: any): Promise<any> => {
+  const versions = ['v1', 'v1beta'];
+  let lastError: any = null;
+
+  for (const ver of versions) {
+    const url = `https://generativelanguage.googleapis.com/${ver}/models/${model}:generateContent?key=${apiKey}`;
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      const errObj = await response.json().catch(() => ({}));
+      lastError = new Error(errObj.error?.message || `HTTP ${response.status} (${ver})`);
+    } catch (err: any) {
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error("Không thể kết nối đến Google Gemini API");
+};
+
 const runClientSideOCR = async (apiKey: string, base64Image: string, imageType: 'teacher_solution' | 'student_work' | 'general'): Promise<string> => {
   const match = base64Image.match(/^data:(image\/[a-z]+);base64,([\s\S]+)$/);
   if (!match) return "";
@@ -110,31 +137,21 @@ Chỉ trả về nội dung OCR, không nhận xét.`;
 Chỉ trả về nội dung đã OCR.`;
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          { text: prompt },
-          {
-            inlineData: {
-              mimeType: mimeType,
-              data: base64Data
-            }
+  const payload = {
+    contents: [{
+      parts: [
+        { text: prompt },
+        {
+          inlineData: {
+            mimeType: mimeType,
+            data: base64Data
           }
-        ]
-      }]
-    })
-  });
+        }
+      ]
+    }]
+  };
 
-  if (!response.ok) {
-    const errObj = await response.json().catch(() => ({}));
-    throw new Error(errObj.error?.message || `HTTP ${response.status} khi gọi Google Gemini OCR API`);
-  }
-
-  const result = await response.json();
+  const result = await callGeminiAPI(apiKey, "gemini-1.5-flash", payload);
   return result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 };
 
@@ -244,23 +261,13 @@ LƯU Ý CUỐI:
 - KHÔNG cần cung cấp đáp án chuẩn hay giải chi tiết của đề bài trong phần đánh giá này.
 - Tập trung vào việc chỉ ra lỗi sai để học sinh sửa.`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{ text: gradingPrompt }]
-      }]
-    })
-  });
+  const payload = {
+    contents: [{
+      parts: [{ text: gradingPrompt }]
+    }]
+  };
 
-  if (!response.ok) {
-    const errObj = await response.json().catch(() => ({}));
-    throw new Error(errObj.error?.message || `HTTP ${response.status} khi gọi Google Gemini Grading API`);
-  }
-
-  const result = await response.json();
+  const result = await callGeminiAPI(apiKey, "gemini-1.5-flash", payload);
   const aiFeedback = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 
   if (!aiFeedback) {
