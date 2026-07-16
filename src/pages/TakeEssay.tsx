@@ -110,7 +110,7 @@ Chỉ trả về nội dung OCR, không nhận xét.`;
 Chỉ trả về nội dung đã OCR.`;
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -244,7 +244,7 @@ LƯU Ý CUỐI:
 - KHÔNG cần cung cấp đáp án chuẩn hay giải chi tiết của đề bài trong phần đánh giá này.
 - Tập trung vào việc chỉ ra lỗi sai để học sinh sửa.`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -508,9 +508,9 @@ export default function TakeEssay() {
           })
         });
 
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || 'Server không thể phản hồi.');
+        const contentType = res.headers.get('content-type');
+        if (!res.ok || (contentType && contentType.includes('text/html'))) {
+          throw new Error('Server backend không hỗ trợ trực tiếp trên môi trường Vercel.');
         }
 
         const data = await res.json();
