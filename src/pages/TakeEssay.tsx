@@ -518,11 +518,6 @@ export default function TakeEssay() {
       setSubmitError('Vui lòng nhập văn bản lời giải hoặc tải lên ít nhất một hình ảnh bài viết.');
       return;
     }
-    if (!studentApiKey.trim()) {
-      setSubmitError('Học sinh vui lòng nhập API key để chấm điểm.');
-      return;
-    }
-    
     setIsSubmitting(true);
     setSubmitError(null);
     try {
@@ -553,6 +548,9 @@ export default function TakeEssay() {
         score = data.score;
       } catch (apiErr) {
         console.warn("[TakeEssay] Lỗi kết nối server backend, chuyển sang chấm bài trực tiếp trên trình duyệt (client-side fallback)...", apiErr);
+        if (!studentApiKey.trim()) {
+          throw new Error('Hệ thống đang chạy ở chế độ dự phòng (do server không kết nối được). Bạn vui lòng kéo xuống mục số 4 bên dưới để dán mã API Key và tiếp tục chấm điểm.');
+        }
         // Fallback to client-side grading directly from the student's browser using their API key
         const clientRes = await gradeEssayClientSide({ text, images }, essay, studentApiKey);
         aiFeedback = clientRes.aiFeedback;
@@ -1061,21 +1059,23 @@ export default function TakeEssay() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center space-x-2.5 text-emerald-950 font-extrabold text-base">
                     <Sparkles className="w-5 h-5 text-emerald-500 shrink-0" />
-                    <span>Cung cấp Gemini API Key để tự do chấm điểm</span>
+                    <span>Cung cấp Gemini API Key cá nhân (Không bắt buộc / Dự phòng)</span>
                   </div>
                   <span className="text-[10px] bg-emerald-100/85 text-emerald-800 px-3 py-1 rounded-full font-extrabold tracking-wider border border-emerald-200/50 uppercase">
-                    An toàn & Bảo mật tuyệt đối
+                    Mặc định dùng Key máy chủ
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                  Học sinh vui lòng nhập mã API Key của riêng mình để tiến hành gọi mô hình chấm điểm tự luận. Mã khóa của bạn được lưu trữ bảo mật cục bộ ngay trong trình duyệt của bạn (LocalStorage) và gửi trực tiếp tới máy chủ Google AI Studio để thực hiện chấm điểm. Chúng tôi cam kết không lưu trữ hoặc thu thập thông tin này.
+                  <b>💡 LƯU Ý:</b> Hệ thống đã tích hợp máy chủ tự động chấm bài. Bạn <b>KHÔNG CẦN</b> phải nhập API Key của riêng mình mà vẫn có thể nộp bài và chấm điểm AI bình thường. 
+                  <br /><br />
+                  Chỉ trong trường hợp máy chủ bị gián đoạn hoặc quá tải, bạn mới cần dán mã API Key cá nhân của mình vào đây để sử dụng chế độ tự chấm điểm trực tiếp từ trình duyệt (Client-side fallback). Khóa của bạn được lưu trữ bảo mật ngay tại trình duyệt (LocalStorage) và gửi trực tiếp tới Google, cam kết bảo mật tuyệt đối.
                 </p>
                 <div className="relative">
                   <input
                     type="password"
                     value={studentApiKey}
                     onChange={(e) => handleApiKeyChange(e.target.value)}
-                    placeholder="Dán mã Gemini API Key của bạn vào đây (bắt đầu bằng AIzaSy...)"
+                    placeholder="Dán mã Gemini API Key của bạn vào đây nếu muốn dùng khóa riêng (bắt đầu bằng AIzaSy...)"
                     className="w-full border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 text-slate-800 placeholder-slate-400 p-4 pr-12 rounded-2xl text-sm border-2 bg-white font-mono transition-all shadow-sm"
                   />
                   <div className="absolute right-4 top-4.5 text-emerald-500">
