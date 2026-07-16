@@ -199,7 +199,7 @@ Chỉ trả về nội dung đã OCR.`;
         isPoolKey = isFromPool;
         
         const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
+          model: "gemini-1.5-flash",
           contents: [
             { text: prompt },
             {
@@ -431,7 +431,7 @@ LƯU Ý CUỐI:
           isPoolKey = isFromPool;
           
           response = await ai.models.generateContent({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-1.5-flash',
             contents: [{ text: gradingPrompt }]
           });
           break;

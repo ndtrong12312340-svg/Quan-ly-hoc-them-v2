@@ -50,6 +50,34 @@ const renderMathChildren = (children: React.ReactNode): React.ReactNode => {
   return children;
 };
 
+const translateGeminiError = (errorMsg: string): string => {
+  if (!errorMsg) return "Lỗi không xác định khi kết nối với Google Gemini API.";
+  
+  const msg = errorMsg.toLowerCase();
+  
+  if (msg.includes("is not found for api version") || msg.includes("not_found") || msg.includes("model_not_found")) {
+    return "API Key của bạn chưa được kích hoạt 'Generative Language API' hoặc không hỗ trợ mô hình này.\n\n" +
+           "👉 CÁCH KHẮC PHỤC CHI TIẾT:\n" +
+           "1. Nếu tự tạo khóa trên Google Cloud Console thông thường: Bạn BẮT BUỘC phải vào trang Google Cloud Console -> Thư viện API (API Library) -> Tìm kiếm và chọn 'Generative Language API' -> Bấm nút 'KÍCH HOẠT' (Enable) cho dự án của mình.\n" +
+           "2. Cách đơn giản hơn: Hãy truy cập vào https://aistudio.google.com (Google AI Studio) và tạo một API Key mới MIỄN PHÍ. Khóa này đã được kích hoạt sẵn toàn bộ quyền dịch vụ và mô hình Gemini.\n" +
+           "3. Đảm bảo API Key của bạn không bị giới hạn địa chỉ IP hoặc miền gọi (HTTP Referrer) sai cách.";
+  }
+  
+  if (msg.includes("key not valid") || msg.includes("api_key_invalid") || (msg.includes("api key") && msg.includes("invalid"))) {
+    return "Khóa API Key bạn nhập không chính xác hoặc không hợp lệ. Vui lòng kiểm tra lại mã API Key bạn đã sao chép.";
+  }
+  
+  if (msg.includes("quota exceeded") || msg.includes("limit") || msg.includes("resource_exhausted") || msg.includes("429")) {
+    return "Đã hết hạn mức sử dụng (Quota Exceeded) của API Key này. Vui lòng thử lại sau vài phút hoặc đổi một API Key khác.";
+  }
+  
+  if (msg.includes("permission_denied") || msg.includes("403")) {
+    return "API Key bị từ chối truy cập (Permission Denied / 403). Google có thể đã vô hiệu hóa khóa này vì bị lộ hoặc không đủ quyền dịch vụ.";
+  }
+
+  return errorMsg;
+};
+
 // ==========================================
 // CLIENT-SIDE OCR & GRADING FALLBACK FOR VERCEL
 // ==========================================
@@ -562,7 +590,8 @@ export default function TakeEssay() {
     } catch (err: any) {
       console.error("Lỗi nộp bài tự luận:", err);
       // We set local submitError so student does not lose their typed answer and loaded images!
-      setSubmitError(err.message || 'Lỗi khi kết nối chấm bài AI. Vui lòng kiểm tra lại API Key hoặc nhấn nút Nộp bài để thử lại.');
+      const friendlyMsg = translateGeminiError(err.message || String(err));
+      setSubmitError(friendlyMsg);
       setIsSubmitting(false);
     }
   };
