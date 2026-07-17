@@ -76,44 +76,27 @@ const GEMINI_API_KEYS_POOL = [
 ];
 
 let currentKeyIndex = 0;
-const badApiKeys = new Set<string>();
 
-function markApiKeyAsBad(key: string) {
-  if (!key) return;
-  if (GEMINI_API_KEYS_POOL.includes(key)) {
-    badApiKeys.add(key);
-    console.warn(`[API Key Rotator] Đã loại bỏ API Key bị rò rỉ/lỗi: ${key.substring(0, 8)}... (Tổng số key lỗi: ${badApiKeys.size})`);
-  }
-}
-
-function getNextApiKey(studentApiKey?: string): { key: string; isFromPool: boolean } {
+function getNextApiKey(studentApiKey?: string): string {
   if (studentApiKey?.trim()) {
-    return { key: studentApiKey.trim(), isFromPool: false };
+    return studentApiKey.trim();
   }
-  
-  const availableKeys = GEMINI_API_KEYS_POOL.filter(k => !badApiKeys.has(k));
-  if (availableKeys.length === 0) {
-    const envKey = process.env.GEMINI_API_KEY?.trim() || "";
-    return { key: envKey, isFromPool: false };
+  if (GEMINI_API_KEYS_POOL.length === 0) {
+    return process.env.GEMINI_API_KEY?.trim() || "";
   }
-  
-  const index = currentKeyIndex % availableKeys.length;
-  const key = availableKeys[index];
-  currentKeyIndex = (currentKeyIndex + 1) % availableKeys.length;
-  console.log(`[API Key Rotator] Sử dụng API Key tại index ${index} (còn ${availableKeys.length}/${GEMINI_API_KEYS_POOL.length} keys hoạt động)`);
-  return { key, isFromPool: true };
+  // Round robin
+  const key = GEMINI_API_KEYS_POOL[currentKeyIndex];
+  currentKeyIndex = (currentKeyIndex + 1) % GEMINI_API_KEYS_POOL.length;
+  console.log(`[API Key Rotator] Chuyển sang API Key tại index ${currentKeyIndex - 1 < 0 ? GEMINI_API_KEYS_POOL.length - 1 : currentKeyIndex - 1}`);
+  return key;
 }
 
-function getGoogleGenAI(studentApiKey?: string): { ai: GoogleGenAI; apiKey: string; isFromPool: boolean } {
-  const { key, isFromPool } = getNextApiKey(studentApiKey);
-  if (!key) {
+function getGoogleGenAI(studentApiKey?: string): GoogleGenAI {
+  const apiKey = getNextApiKey(studentApiKey);
+  if (!apiKey) {
     throw new Error("Chưa cấu hình GEMINI_API_KEY trên hệ thống.");
   }
-  return {
-    ai: new GoogleGenAI({ apiKey: key }),
-    apiKey: key,
-    isFromPool
-  };
+  return new GoogleGenAI({ apiKey });
 }
 
 async function startServer() {
@@ -189,17 +172,11 @@ Chỉ trả về nội dung đã OCR.`;
     }
 
     let attempt = 0;
-    const maxRetries = 100; // Large retry count to cycle through bad keys
-    while (attempt < maxRetries) {
-      let apiKeyUsed = "";
-      let isPoolKey = false;
+    while (attempt < 3) {
       try {
-        const { ai, apiKey, isFromPool } = getGoogleGenAI(studentApiKey);
-        apiKeyUsed = apiKey;
-        isPoolKey = isFromPool;
-        
+        const ai = getGoogleGenAI(studentApiKey);
         const response = await ai.models.generateContent({
-          model: "gemini-1.5-flash",
+          model: "gemini-3.5-flash",
           contents: [
             { text: prompt },
             {
@@ -213,31 +190,8 @@ Chỉ trả về nội dung đã OCR.`;
         return response.text?.trim() || "";
       } catch (e: any) {
         attempt++;
-        const errorMsg = e.message || String(e);
-        const errorStr = JSON.stringify(e);
-        console.error(`[OCR] Lỗi lần thử ${attempt}:`, errorMsg);
-        
-        // Handle leaked key or invalid key error
-        const isLeaked = errorMsg.includes("leaked") || 
-                         errorMsg.includes("PERMISSION_DENIED") || 
-                         errorMsg.includes("API key not valid") || 
-                         errorMsg.includes("403") ||
-                         errorStr.includes("leaked") ||
-                         errorStr.includes("PERMISSION_DENIED") ||
-                         errorStr.includes("API_KEY_INVALID");
-                         
-        if (!isPoolKey) {
-          // If the student provided their own API Key, fail immediately without waiting or retrying
-          throw e;
-        }
-
-        if (isPoolKey && isLeaked) {
-          markApiKeyAsBad(apiKeyUsed);
-          // If we hit a bad key, retry immediately without wait
-          continue;
-        }
-        
-        if (attempt >= maxRetries) throw e;
+        console.error(`[OCR] Lỗi lần thử ${attempt}:`, e.message || e);
+        if (attempt >= 3) throw e;
         await new Promise(r => setTimeout(r, 1000));
       }
     }
@@ -421,48 +375,20 @@ LƯU Ý CUỐI:
 
       let response: any = null;
       let attempt = 0;
-      const maxRetries = 100; // Large retry count to cycle through bad keys
+      const maxRetries = 4;
       while (attempt < maxRetries) {
-        let apiKeyUsed = "";
-        let isPoolKey = false;
         try {
-          const { ai, apiKey, isFromPool } = getGoogleGenAI(studentApiKey);
-          apiKeyUsed = apiKey;
-          isPoolKey = isFromPool;
-          
+          const ai = getGoogleGenAI(studentApiKey);
           response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-3.5-flash',
             contents: [{ text: gradingPrompt }]
           });
           break;
         } catch (apiErr: any) {
           attempt++;
-          const errorMsg = apiErr.message || String(apiErr);
-          const errorStr = JSON.stringify(apiErr);
-          console.error(`[AI Grading] Chấm điểm lần ${attempt}/${maxRetries} thất bại:`, errorMsg);
-          
-          // Handle leaked key or invalid key error
-          const isLeaked = errorMsg.includes("leaked") || 
-                           errorMsg.includes("PERMISSION_DENIED") || 
-                           errorMsg.includes("API key not valid") || 
-                           errorMsg.includes("403") ||
-                           errorStr.includes("leaked") ||
-                           errorStr.includes("PERMISSION_DENIED") ||
-                           errorStr.includes("API_KEY_INVALID");
-                           
-          if (!isPoolKey) {
-            // If the student provided their own API Key, fail immediately without waiting or retrying
-            throw apiErr;
-          }
-
-          if (isPoolKey && isLeaked) {
-            markApiKeyAsBad(apiKeyUsed);
-            // If we hit a bad key, retry immediately without wait
-            continue;
-          }
-          
+          console.error(`[AI Grading] Chấm điểm lần ${attempt}/${maxRetries} thất bại:`, apiErr.message || apiErr);
           if (attempt >= maxRetries) throw apiErr;
-          const backoffTime = Math.pow(2, Math.min(attempt, 4)) * 1000;
+          const backoffTime = Math.pow(2, attempt) * 1000;
           await new Promise(r => setTimeout(r, backoffTime));
         }
       }
