@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { CheckCircle, AlertCircle, BookOpen } from 'lucide-react';
 import MathText from '../components/MathText';
 
@@ -32,6 +32,16 @@ export default function StudentExamResult() {
         const subSnap = await getDocs(q);
         if (!subSnap.empty) {
           setSubmission({ id: subSnap.docs[0].id, ...subSnap.docs[0].data() });
+        } else {
+          // Cleanup dangling reference
+          const hasDangling = (appUser as any).completedExams?.some((c: any) => c.examId === examId);
+          if (hasDangling && appUser) {
+            const userRef = doc(db, 'users', appUser.uid);
+            const newCompleted = ((appUser as any).completedExams || []).filter((c: any) => c.examId !== examId);
+            try {
+               await updateDoc(userRef, { completedExams: newCompleted });
+            } catch (err) { console.error("Cleanup error", err); }
+          }
         }
       } catch (error) {
         handleFirestoreError(error, OperationType.GET, 'exam_result');

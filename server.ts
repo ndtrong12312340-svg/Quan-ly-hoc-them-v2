@@ -6,74 +6,13 @@ import dotenv from "dotenv";
 
 dotenv.config({ override: true });
 
-const GEMINI_API_KEYS_POOL = [
-  'AIzaSyB_Qny4wx2jxZZY5fguRxa8uQtwkYy2C30',
-  'AIzaSyBhNy-gvfhROFowD0nh3-sDU9-PTlXPaFU',
-  'AIzaSyAg2Mosmu1giU5QDreB1kOUFpb1Qvl0zsU',
-  'AIzaSyA9SDo7PL3Vr6I32GS_tW5DLtGIE2KkRUA',
-  'AIzaSyDPmSHKNgj56COQDr1lmvWFVqBCniY-5tw',
-  'AIzaSyB5X1OUUMuM7cmhf5AtxzboJ4NUfFgiaoQ',
-  'AIzaSyBad0nvsBQPhaYlRmEO_VQ8P40_enwDA_I',
-  'AIzaSyBPhPqe_HnjzhER_qbKMnw0PqMVExr7cy4',
-  'AIzaSyAsJ6SmiSwCI_M4huh1qu2SCRH_zRWDEAI',
-  'AIzaSyD5gmujSVPFjzLgsQ6Q_Gpm6Qx_YetAUq0',
-  'AIzaSyDdXmJ7BvwPTPHi8KZoaNMVUhhoSWMriLc',
-  'AIzaSyAh4ObHnCbJa4mbbSrUn7i1iiIM3cLEVxU',
-  'AIzaSyBqLkDWDv2nkEV9aZjVYX0G3qqlay5tAwA',
-  'AIzaSyBuR2Hp96zawcHtBaS-KqPLieW3yQqFyXU',
-  'AIzaSyAY8FsyCezqPWKyBYRe2mOXyFxEnOk8q58',
-  'AIzaSyDE9iqJMGJB_S9-ByMvh0M9k9k_9UhKuVA',
-  'AIzaSyCKBMsN_wEwmN7sbBDgfA15mPe02azPSj8',
-  'AIzaSyAuGu_mx51hgwJurBX8uvGv09eUAigt_fc',
-  'AIzaSyDlRPS_8gTEK3jrx_H7O0-LDlMtoYwf_UQ',
-  'AIzaSyDlWxgvEC3YC6a5VIMhQvx1Y9O3VJV7HoY',
-  'AIzaSyDfUOOJQTidjluK3oRdcmP3xSK5KGmj4Iw',
-  'AIzaSyBFBmJwU69W-bVmq9D31Ntf_rCR7VIXa_8',
-  'AIzaSyCAOBjPRLn2LpsmLj7cf4PTOmqV7IHm8UQ',
-  'AIzaSyDHIY3cOrMQn4wraxrFwybdtczl2QgALWI',
-  'AIzaSyCuRUDCJLawCBU_t39bx0s0KA1JZrIm-qc',
-  'AIzaSyCQrPxuEn3bbt_Ah8reUtIhdS45RxDDQ0k',
-  'AIzaSyAXfh7TzP6Y6WKGwBDkjWcBLMc-JcKX4bo',
-  'AIzaSyDNAMA5mi60HS-60m5Hu1tk34l6SmDQnCo',
-  'AIzaSyBTmfLsP6XjRfoiNZrNW1dpFQnUJ59URik',
-  'AIzaSyA13hqiARHHz7kmqj_cKoY-hOog8jFaf-8',
-  'AIzaSyC5EvGM_R76w_WuQ87T5hW4nLgglHWwHM0',
-  'AIzaSyDzJhcZNCzm2gJ6eYqJjFmIfDvD0zc19vY',
-  'AIzaSyAom7lkHsK_Sf-vwIdVRuEoE2oinqPOHms',
-  'AIzaSyA1ktsQtaZgif_AtBL9BtDS--P7F4q59p0',
-  'AIzaSyCSs2U-xX_HOEguusrzY1bYU-4nJV69dH8',
-  'AIzaSyAxCnz46AZhb9u0_v97mYJIDLd97zJT8Lc',
-  'AIzaSyAXuKYMhGw4y_V7s-IMPgUz1nZbt9p3wFA',
-  'AIzaSyBj53XcyAu_E3CoMKekkUMw54RZ9RAUaqI',
-  'AIzaSyCJQgIj374585ut-2EtQMzHuc2wL49C69I',
-  'AIzaSyB_X1ajcltZqFc-_7Nu_arVcDZhTAfpa9k',
-  'AIzaSyBe4tZ-bAolNQVcf7___1etRrNXX1eTXas',
-  'AIzaSyDFbNEMGHwfrjZyU0dR4_aZoYlnmOUu-O4',
-  'AIzaSyDu07SmALKhuZb_F1rjBVh46MfXfdsiZzw',
-  'AIzaSyA8QnF4tHOP4RsmJha2LGQJlsw_YJVtrMQ',
-  'AIzaSyCvaUwicMgOmMp2r3IMihmbga1Mcy7h3oc',
-  'AIzaSyChtXrvdl3LfR9STm3ZdLdvcip_HX7Qn2Q',
-  'AIzaSyCKZ3MX0HfJzhldx5dFEof_YN5ZEiJqXk0',
-  'AIzaSyBXrb9EcEY2bsmWu-jT_qrWmUQSH6AByp0',
-  'AIzaSyCu8vEeZfoS1j5mtUrStUgww4gR54OPeC8',
-  'AIzaSyDHf40xhpP4yFquzW_24WB05xb1ua0WAE8',
-  'AIzaSyAq3xGQiQiZ8jfN1w8X3y7W57Mc5eo2QmY',
-  'AIzaSyCAUcufTMIgmBn0aowY8yF2N04TsiDAfqc',
-  'AIzaSyAfPbolwaiRvqKqBteVmTb1ubJ-SwA8Quc',
-  'AIzaSyDnR32e4U6mwrMUm4ERrY30BfPUqR-eVgg',
-  'AIzaSyCozHxGjhuVqZbBA-rH3mv4OWzW6g5Ii-U',
-  'AIzaSyDY1gRdRFd_nADr2UmlOEw_-1VgJ_D3d2w',
-  'AIzaSyA5Hm6nyRcLUk4Q_cfJ51JLYrXJHAAnjfc',
-  'AIzaSyAbtLVxl-owwdQTLMR1F6YMZeQxzeVr5NA',
-  'AIzaSyBDR9OxmWHFIhq0Li7hgq3KnHnAw99HCPI',
-  'AIzaSyA7AScOaM2iRCPFFoGRW1PyqjHk4N3AgRc',
-  'AIzaSyAfs5fu3mkvvNftJ6G3geW7ga9loetkE88',
-  'AIzaSyDFKkGkjCQjjHUu0mkReJL3b-UBqFbnyUM',
-  'AIzaSyDbFZFixJBMv81j1JF3ADkqtAz7MZRaWRM',
-  'AIzaSyAqu9J4PGQHKLWKOn66QCyanpPRVbUZ0aU',
-  'AIzaSyBlsZZbOdMKMd3CITfMl2HuV1Uz1sZ4wqg',
-  'AIzaSyBaG8aj5AYMncoBPiOPJoTAM6hcei2-ma4'
-];
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const GEMINI_API_KEYS_POOL: string[] = process.env.GEMINI_API_KEYS
+  ? process.env.GEMINI_API_KEYS.split(/[,;\s]+/).map(k => k.trim()).filter(Boolean)
+  : [];
+
+console.log(`[System Pool] Khởi tạo pool với ${GEMINI_API_KEYS_POOL.length} API Keys từ biến môi trường GEMINI_API_KEYS.`);
 
 let currentKeyIndex = 0;
 
@@ -172,11 +111,15 @@ Chỉ trả về nội dung đã OCR.`;
     }
 
     let attempt = 0;
-    while (attempt < 3) {
+    let currentApiKeyToUse = studentApiKey?.trim();
+    const poolSize = GEMINI_API_KEYS_POOL.length;
+    const maxAttempts = (currentApiKeyToUse ? 3 : 0) + (poolSize > 0 ? poolSize : 3); // 3 for student key, plus poolSize or 3 fallback attempts
+    
+    while (attempt < maxAttempts) {
       try {
-        const ai = getGoogleGenAI(studentApiKey);
+        const ai = getGoogleGenAI(currentApiKeyToUse);
         const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
+          model: "gemini-flash-latest",
           contents: [
             { text: prompt },
             {
@@ -190,9 +133,46 @@ Chỉ trả về nội dung đã OCR.`;
         return response.text?.trim() || "";
       } catch (e: any) {
         attempt++;
-        console.error(`[OCR] Lỗi lần thử ${attempt}:`, e.message || e);
-        if (attempt >= 3) throw e;
-        await new Promise(r => setTimeout(r, 1000));
+        console.error(`[OCR] Lỗi lần thử ${attempt}/${maxAttempts} (Key: ${currentApiKeyToUse ? "Custom" : "System Pool"}):`, e.message || e);
+        if (attempt >= maxAttempts) throw e;
+        
+        const hasSystemFallback = GEMINI_API_KEYS_POOL.length > 0 || !!process.env.GEMINI_API_KEY;
+        const isPermanentAuthError = 
+          e.status === 'PERMISSION_DENIED' || 
+          e.status === 403 || 
+          (e.message && (
+            e.message.includes('API key not valid') || 
+            e.message.includes('API_KEY_INVALID') || 
+            e.message.includes('invalid key') ||
+            e.message.includes('PERMISSION_DENIED')
+          ));
+        
+        const isQuotaError = 
+          e.status === 'RESOURCE_EXHAUSTED' || 
+          e.status === 429 || 
+          (e.message && (
+            e.message.includes('exhausted') || 
+            e.message.includes('quota') || 
+            e.message.includes('limit') || 
+            e.message.includes('RESOURCE_EXHAUSTED') ||
+            e.message.includes('429')
+          ));
+
+        if (currentApiKeyToUse && hasSystemFallback && (isPermanentAuthError || isQuotaError)) {
+          console.warn(`[OCR Fallback] API Key học sinh gặp sự cố (${e.message || "Quota/Auth Error"}). Tự động chuyển hướng dự phòng sang Pool API Key hệ thống! Chuyển ngay lập tức không thử lại.`);
+          currentApiKeyToUse = undefined; // Trigger system pool on subsequent attempts
+          continue; // Immediately try next key from pool
+        }
+        
+        if (!currentApiKeyToUse && (isPermanentAuthError || isQuotaError)) {
+          // Immediately try next key from pool (if we are rotating inside the system pool)
+          if (GEMINI_API_KEYS_POOL.length > 1) {
+            continue;
+          }
+        }
+        
+        const backoffTime = Math.pow(2, attempt) * 1000;
+        await new Promise(r => setTimeout(r, backoffTime));
       }
     }
     return "";
@@ -235,16 +215,22 @@ Chỉ trả về nội dung đã OCR.`;
   // API route for converting images to math text/formulas using OCR
   app.post("/api/ocr-images", async (req, res) => {
     try {
-      const { images, type } = req.body;
+      const { images, type, studentApiKey } = req.body;
       if (!images || !Array.isArray(images) || images.length === 0) {
         return res.status(400).json({ error: "Không tìm thấy hình ảnh để nhận diện." });
       }
 
       console.log(`[API OCR] Nhận diện ${images.length} ảnh dạng ${type || 'general'}...`);
       
-      const ocrResults = await Promise.all(
-        images.map((img: string) => runOCR(undefined, img, type || 'general'))
-      );
+      const ocrResults: string[] = [];
+      for (let i = 0; i < images.length; i++) {
+        if (i > 0) {
+          console.log(`[API OCR] Đang nghỉ 1.2s trước ảnh thứ ${i + 1}...`);
+          await sleep(1200);
+        }
+        const text = await runOCR(studentApiKey, images[i], type || 'general');
+        ocrResults.push(text);
+      }
 
       const combinedText = ocrResults.filter(Boolean).join("\n\n---\n\n");
       res.json({ success: true, text: combinedText });
@@ -269,9 +255,15 @@ Chỉ trả về nội dung đã OCR.`;
       if (essay.assignmentImages && essay.assignmentImages.length > 0) {
         console.log(`[AI Grading Pipeline] OCR ${essay.assignmentImages.length} ảnh đề bài...`);
         try {
-          const ocrResults = await Promise.all(
-            essay.assignmentImages.map((img: string) => runOCR(studentApiKey, img, 'general'))
-          );
+          const ocrResults: string[] = [];
+          for (let i = 0; i < essay.assignmentImages.length; i++) {
+            if (i > 0) {
+              console.log(`[AI Grading Pipeline] Nghỉ 1.2s trước ảnh đề bài thứ ${i + 1}...`);
+              await sleep(1200);
+            }
+            const text = await runOCR(studentApiKey, essay.assignmentImages[i], 'general');
+            ocrResults.push(text);
+          }
           problemText += "\nNội dung đề bài từ ảnh:\n" + ocrResults.filter(Boolean).join("\n---\n");
         } catch (err) {
           console.error("[AI Grading Pipeline] Lỗi OCR đề bài:", err);
@@ -283,9 +275,15 @@ Chỉ trả về nội dung đã OCR.`;
       if (essay.solutionImages && essay.solutionImages.length > 0) {
         console.log(`[AI Grading Pipeline] OCR ${essay.solutionImages.length} ảnh đáp án giáo viên...`);
         try {
-          const ocrResults = await Promise.all(
-            essay.solutionImages.map((img: string) => runOCR(studentApiKey, img, 'teacher_solution'))
-          );
+          const ocrResults: string[] = [];
+          for (let i = 0; i < essay.solutionImages.length; i++) {
+            if (i > 0) {
+              console.log(`[AI Grading Pipeline] Nghỉ 1.2s trước ảnh đáp án thứ ${i + 1}...`);
+              await sleep(1200);
+            }
+            const text = await runOCR(studentApiKey, essay.solutionImages[i], 'teacher_solution');
+            ocrResults.push(text);
+          }
           const solutionOcrText = ocrResults.filter(Boolean).join("\n---\n");
           if (teacherSolutions) {
             teacherSolutions += "\n\nNội dung đáp án bổ sung từ ảnh:\n" + solutionOcrText;
@@ -299,24 +297,30 @@ Chỉ trả về nội dung đã OCR.`;
 
       // 3. OCR Bài làm học sinh
       let studentAnswer = submission.text || "";
-      if (submission.images && submission.images.length > 0) {
+      if (!studentAnswer && submission.images && submission.images.length > 0) {
         console.log(`[AI Grading Pipeline] OCR ${submission.images.length} ảnh bài làm học sinh...`);
         try {
-          const ocrResults = await Promise.all(
-            submission.images.map((img: string) => runOCR(studentApiKey, img, 'student_work'))
-          );
-          const studentOcrText = ocrResults.filter(Boolean).join("\n---\n");
-          if (studentAnswer) {
-            studentAnswer += "\n\nNội dung bài làm bổ sung từ ảnh:\n" + studentOcrText;
-          } else {
-            studentAnswer = studentOcrText;
+          const ocrResults: string[] = [];
+          for (let i = 0; i < submission.images.length; i++) {
+            if (i > 0) {
+              console.log(`[AI Grading Pipeline] Nghỉ 1.2s trước ảnh bài làm thứ ${i + 1}...`);
+              await sleep(1200);
+            }
+            const text = await runOCR(studentApiKey, submission.images[i], 'student_work');
+            ocrResults.push(text);
           }
+          const studentOcrText = ocrResults.filter(Boolean).join("\n---\n");
+          studentAnswer = studentOcrText;
         } catch (err) {
           console.error("[AI Grading Pipeline] Lỗi OCR bài làm:", err);
         }
+      } else if (studentAnswer) {
+        console.log("[AI Grading Pipeline] Sử dụng nội dung bài làm đã nhận diện (OCR) từ phía máy khách, bỏ qua cuộc gọi OCR trùng lặp.");
       }
 
       // 4. Tiến hành chấm điểm chi tiết bằng prompt giáo viên toán học chuyên nghiệp
+      console.log("[AI Grading Pipeline] Đang chờ 1.5s để làm mát API key trước khi chấm điểm...");
+      await sleep(1500);
       console.log("[AI Grading Pipeline] Tiến hành chấm điểm so sánh...");
       const gradingPrompt = `Bạn là GIÁO VIÊN TOÁN HỌC CHUYÊN NGHIỆP với 20 năm kinh nghiệm chấm bài.
 Nhiệm vụ: CHẤM BÀI TOÁN bằng cách so sánh chi tiết bài làm học sinh với đáp án chuẩn.
@@ -344,25 +348,21 @@ QUY TẮC CHẤM:
 - Nếu có cách làm sáng tạo và đúng: cho điểm tối đa
 - Thang điểm: 0–10 (cho phép dùng 0.25, 0.5, 0.75). Làm tròn điểm cuối cùng đến bội số 0.25
 
-HÃY TRẢ VỀ ĐÚNG ĐỊNH DẠNG SAU (không thay đổi tiêu đề, giữ nguyên thứ tự):
+HÃY TRẢ VỀ ĐÚNG ĐỊNH DẠNG SAU (sử dụng Markdown cho đẹp mắt):
 
-CHI TIẾT CHẤM:
-- Câu 1: [Điểm đạt được] / [Điểm tối đa câu]. (phân tách điểm: phương pháp: a điểm, các bước: b điểm, tính toán: c điểm, kết quả: d điểm). Lý do trừ điểm: ...
-  Chỉ ghi lỗi sai
-  -> Lỗi: [Chỉ ghi ngắn gọn lỗi sai nếu có. Ví dụ: "Sai dấu dòng 3", "Thiếu điều kiện x>0". Nếu đúng ghi "Làm tốt"].
-  -> Thiếu (bước quan trọng): ghi "THIẾU: mô tả bước" và ảnh hưởng của việc thiếu đó đến kết quả.
-  ....
-- Câu 2: [Điểm đạt được] / [Điểm tối đa câu].
-  Chỉ ghi lỗi sai
-  -> Lỗi: [Chỉ ghi ngắn gọn lỗi sai nếu có. Ví dụ: "Sai dấu dòng 3", "Thiếu điều kiện x>0". Nếu đúng ghi "Làm tốt"]. 
-  -> Thiếu (bước quan trọng): ghi "THIẾU: mô tả bước" và ảnh hưởng của việc thiếu đó đến kết quả.
-  ....
+### CHI TIẾT CHẤM:
+- **Câu 1**: [Điểm đạt được] / [Điểm tối đa câu]. 
+  - *Lỗi (nếu có)*: [Chỉ ghi ngắn gọn lỗi sai. Ví dụ: "Sai dấu dòng 3", "Thiếu điều kiện x>0". Nếu đúng ghi "Làm tốt"].
+  - *Thiếu (nếu có)*: [Mô tả bước quan trọng bị thiếu].
+- **Câu 2**: [Điểm đạt được] / [Điểm tối đa câu].
+  - ... (tương tự)
 
-TỔNG ĐIỂM: [Số điểm] / 10. (Không làm tròn)
+### TỔNG ĐIỂM: [Số điểm] / 10. (Không làm tròn)
 
-NHẬN XÉT & GÓP Ý:
-- [Nhận xét chung ngắn gọn trong 1 câu].
-- [Gợi ý sửa lỗi quan trọng nhất nếu có].
+### NHẬN XÉT & GÓP Ý:
+- **Ưu điểm**: [Nhận xét điểm tốt, khen ngợi những chỗ học sinh làm đúng và sáng tạo]
+- **Nhược điểm**: [Phân tích chi tiết những lỗi sai, lỗ hổng kiến thức học sinh mắc phải]
+- **Khắc phục**: [Đưa ra hướng dẫn cụ thể cách sửa lỗi và gợi ý ôn tập]
 
 QUY TẮC TRÌNH BÀY CÔNG THỨC TOÁN HỌC:
 - KHÔNG sử dụng các đoạn mã LaTeX thô hoặc phức tạp (như \frac, \sqrt, \alpha, \beta, \Rightarrow, v.v.).
@@ -375,19 +375,57 @@ LƯU Ý CUỐI:
 
       let response: any = null;
       let attempt = 0;
-      const maxRetries = 4;
+      let currentApiKeyToUse = studentApiKey?.trim();
+      const poolSize = GEMINI_API_KEYS_POOL.length;
+      const maxRetries = (currentApiKeyToUse ? 3 : 0) + (poolSize > 0 ? poolSize : 3); // 3 for student key, plus poolSize or 3 fallback attempts
+      
       while (attempt < maxRetries) {
         try {
-          const ai = getGoogleGenAI(studentApiKey);
+          const ai = getGoogleGenAI(currentApiKeyToUse);
           response = await ai.models.generateContent({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-flash-latest',
             contents: [{ text: gradingPrompt }]
           });
           break;
         } catch (apiErr: any) {
           attempt++;
-          console.error(`[AI Grading] Chấm điểm lần ${attempt}/${maxRetries} thất bại:`, apiErr.message || apiErr);
+          console.error(`[AI Grading] Chấm điểm lần ${attempt}/${maxRetries} thất bại (Key: ${currentApiKeyToUse ? "Custom" : "System Pool"}):`, apiErr.message || apiErr);
           if (attempt >= maxRetries) throw apiErr;
+          
+          const hasSystemFallback = GEMINI_API_KEYS_POOL.length > 0 || !!process.env.GEMINI_API_KEY;
+          const isPermanentAuthError = 
+            apiErr.status === 'PERMISSION_DENIED' || 
+            apiErr.status === 403 || 
+            (apiErr.message && (
+              apiErr.message.includes('API key not valid') || 
+              apiErr.message.includes('API_KEY_INVALID') || 
+              apiErr.message.includes('invalid key') ||
+              apiErr.message.includes('PERMISSION_DENIED')
+            ));
+          
+          const isQuotaError = 
+            apiErr.status === 'RESOURCE_EXHAUSTED' || 
+            apiErr.status === 429 || 
+            (apiErr.message && (
+              apiErr.message.includes('exhausted') || 
+              apiErr.message.includes('quota') || 
+              apiErr.message.includes('limit') || 
+              apiErr.message.includes('RESOURCE_EXHAUSTED') ||
+              apiErr.message.includes('429')
+            ));
+          
+          if (currentApiKeyToUse && hasSystemFallback && (isPermanentAuthError || isQuotaError)) {
+            console.warn(`[AI Grading Fallback] API Key học sinh gặp sự cố (${apiErr.message || "Quota/Auth Error"}). Tự động chuyển hướng dự phòng sang Pool API Key hệ thống! Chuyển ngay lập tức không thử lại.`);
+            currentApiKeyToUse = undefined; // Trigger system pool on subsequent attempts
+            continue; // Immediately try next key from pool
+          }
+          
+          if (!currentApiKeyToUse && (isPermanentAuthError || isQuotaError)) {
+            if (GEMINI_API_KEYS_POOL.length > 1) {
+              continue; // immediately try the next key from the pool
+            }
+          }
+          
           const backoffTime = Math.pow(2, attempt) * 1000;
           await new Promise(r => setTimeout(r, backoffTime));
         }

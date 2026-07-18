@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { db } from '../lib/firebase';
-import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '../lib/AuthContext';
 import { 
   ArrowLeft, 
@@ -26,6 +26,202 @@ import ReactMarkdown from 'react-markdown';
 import Latex from 'react-latex-next';
 import 'katex/dist/katex.min.css';
 
+// CSS Mockups designed to look exactly like Google AI Studio, solving broken image issues.
+const Step1Mockup = () => (
+  <div className="w-full aspect-[4/3] bg-slate-50 rounded-xl border border-slate-200 shadow-md flex flex-col overflow-hidden text-left font-sans select-none relative">
+    {/* Browser Tab Bar */}
+    <div className="bg-slate-100 px-2 py-1 flex items-center space-x-1 border-b border-slate-200 shrink-0">
+      <div className="flex space-x-1">
+        <span className="w-2 h-2 rounded-full bg-red-400 inline-block"></span>
+        <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>
+        <span className="w-2 h-2 rounded-full bg-green-400 inline-block"></span>
+      </div>
+      <div className="flex-1 flex space-x-1 pl-3">
+        <div className="bg-white px-2 py-0.5 rounded-t text-[8px] text-slate-700 font-medium border-t border-x border-slate-200 flex items-center space-x-1 max-w-[110px] truncate shadow-sm">
+          <span className="text-blue-500 text-[6px]">⚡</span>
+          <span>API keys | Google AI...</span>
+        </div>
+        <div className="px-2 py-0.5 rounded-t text-[8px] text-slate-400 flex items-center space-x-1 max-w-[110px] truncate">
+          <span>🌐 TOÁN THẦY TRỌNG 3T</span>
+        </div>
+      </div>
+    </div>
+    {/* Address Bar */}
+    <div className="bg-white px-2 py-0.5 flex items-center border-b border-slate-200 shrink-0">
+      <div className="flex-1 bg-slate-100 rounded px-2 py-0.5 text-[8px] text-slate-500 truncate font-mono">
+        https://aistudio.google.com/app/api-keys?project=seismic-honor-492901-g3
+      </div>
+    </div>
+    {/* Web Page Workspace */}
+    <div className="flex-1 bg-white p-3 flex flex-col justify-between overflow-hidden">
+      {/* Sidebar button & Content Header */}
+      <div className="flex justify-between items-center shrink-0">
+        <div className="flex items-center space-x-2">
+          <div className="p-1 border border-slate-200 rounded bg-slate-50 text-slate-500">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </div>
+          <h1 className="text-xs font-extrabold text-slate-800 tracking-tight">API keys</h1>
+        </div>
+        
+        {/* Buttons on the right */}
+        <div className="flex items-center space-x-1.5">
+          <span className="text-[7px] text-slate-500 flex items-center space-x-0.5 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">
+            <span>📄</span>
+            <span>API Quick Start Guide</span>
+          </span>
+          
+          {/* Circled "Create an API key" button */}
+          <div className="relative p-0.5 shrink-0">
+            <button className="bg-white hover:bg-slate-50 text-slate-700 text-[7.5px] font-bold px-2 py-1 border border-slate-300 rounded flex items-center space-x-1 shadow-sm">
+              <span>🔑</span>
+              <span>Create an API key</span>
+            </button>
+            {/* Red highlight circle matching the user's screenshot */}
+            <div className="absolute inset-0 border-2 border-red-500 rounded pointer-events-none opacity-90 animate-pulse" style={{ transform: 'scale(1.2) rotate(-2deg)' }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sub controls */}
+      <div className="mt-2 flex justify-between items-center text-[7px] text-slate-500 shrink-0">
+        <div className="flex items-center space-x-1">
+          <span>Group by</span>
+          <button className="bg-slate-100 text-slate-800 border border-slate-300 px-1.5 py-0.5 rounded-l font-medium">● API key</button>
+          <button className="bg-white text-slate-500 border border-l-0 border-slate-300 px-1.5 py-0.5 rounded-r">Project</button>
+        </div>
+        <div className="flex items-center space-x-0.5 border border-slate-200 px-1.5 py-0.5 rounded bg-slate-50">
+          <span>Filter by</span>
+          <span className="font-semibold text-slate-700">All projects</span>
+          <span>▼</span>
+        </div>
+      </div>
+      
+      {/* Decorative Bottom Table */}
+      <div className="mt-2 flex-1 border border-slate-100 rounded p-2 bg-slate-50/50 flex flex-col justify-center items-center text-center">
+        <span className="text-[8px] text-slate-400">Danh sách các API Key hiện có sẽ hiển thị ở đây...</span>
+      </div>
+    </div>
+  </div>
+);
+
+const Step2Mockup = () => (
+  <div className="w-full aspect-[4/3] bg-slate-100 rounded-xl border border-slate-200 shadow-md flex flex-col overflow-hidden text-left font-sans select-none relative">
+    {/* Background simulated dialog backdrop */}
+    <div className="absolute inset-0 bg-slate-900/10 flex items-center justify-center p-3">
+      {/* Modal Dialog */}
+      <div className="bg-white rounded-lg shadow-xl border border-slate-200 w-full max-w-[240px] p-3 space-y-2.5">
+        {/* Header */}
+        <div className="flex justify-between items-center border-b border-slate-100 pb-1 shrink-0">
+          <h2 className="text-[10px] font-bold text-slate-800">Create a key</h2>
+          <span className="text-slate-400 text-[9px] cursor-pointer">✕</span>
+        </div>
+        
+        {/* Fields */}
+        <div className="space-y-2">
+          <div className="space-y-0.5">
+            <label className="block text-[7px] font-medium text-slate-500 uppercase tracking-wider">Give your key a name</label>
+            <input 
+              type="text" 
+              readOnly 
+              value="Gemini API Key 7" 
+              className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-0.5 text-[8px] text-slate-700 outline-none"
+            />
+          </div>
+          
+          <div className="space-y-0.5">
+            <label className="block text-[7px] font-medium text-slate-500 uppercase tracking-wider">Choose an imported project</label>
+            <div className="w-full bg-white border border-slate-200 rounded px-2 py-0.5 text-[8px] text-slate-700 flex justify-between items-center cursor-pointer">
+              <span>My Project 93316</span>
+              <span className="text-[7px] text-slate-400">▼</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer buttons */}
+        <div className="flex justify-end items-center space-x-2 pt-1 shrink-0">
+          <button className="text-[8px] font-bold text-slate-600 hover:text-slate-800">Cancel</button>
+          
+          {/* Circled "Create a key" button */}
+          <div className="relative p-0.5 shrink-0">
+            <button className="bg-slate-100 text-slate-700 text-[8px] font-extrabold px-2 py-1 rounded border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-200">
+              Create a key
+            </button>
+            {/* Red highlight circle matching the user's screenshot */}
+            <div className="absolute inset-0 border-2 border-red-500 rounded-full pointer-events-none opacity-90 animate-pulse" style={{ transform: 'scale(1.2) rotate(3deg)' }}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const Step3Mockup = () => (
+  <div className="w-full aspect-[4/3] bg-slate-100 rounded-xl border border-slate-200 shadow-md flex flex-col overflow-hidden text-left font-sans select-none relative">
+    {/* Background simulated dialog backdrop */}
+    <div className="absolute inset-0 bg-slate-900/10 flex items-center justify-center p-3">
+      {/* Modal Dialog */}
+      <div className="bg-white rounded-lg shadow-xl border border-slate-200 w-full max-w-[240px] p-2.5 space-y-2">
+        {/* Header */}
+        <div className="flex justify-between items-center border-b border-slate-100 pb-1 shrink-0">
+          <h2 className="text-[10px] font-bold text-slate-800">API key details</h2>
+          <span className="text-slate-400 text-[9px] cursor-pointer">✕</span>
+        </div>
+        
+        {/* Blue Info Box */}
+        <div className="bg-blue-50/70 border border-blue-100 rounded p-1.5 flex items-start space-x-1 shrink-0">
+          <span className="text-blue-500 text-[9px] mt-0.5 leading-none">ⓘ</span>
+          <p className="text-[6.5px] text-slate-600 leading-normal font-normal">
+            To learn more about using authentication keys with the Gemini API, see the <span className="text-blue-600 underline font-semibold cursor-pointer">API key documentation</span>.
+          </p>
+        </div>
+
+        {/* Info Rows */}
+        <div className="space-y-1.5 text-[7px] max-h-[85px] overflow-hidden">
+          {/* API Key Field */}
+          <div className="flex justify-between items-start">
+            <div className="flex-1 min-w-0 pr-1.5">
+              <span className="block text-slate-500 font-medium">API key</span>
+              <span className="block font-mono text-slate-800 break-all font-semibold text-[6.5px] bg-slate-50 p-1 rounded border border-slate-100 truncate">
+                AQ.Ab8RN6LpUHA0uO80HguqFXjnza1H0mj3...
+              </span>
+            </div>
+            
+            {/* Red highlight circled copy button */}
+            <div className="relative mt-2.5 p-0.5 shrink-0">
+              <button className="p-0.5 hover:bg-slate-100 rounded border border-slate-200 text-slate-500 bg-white">
+                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4l3 3v4a2 2 0 01-2 2h-1M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                </svg>
+              </button>
+              {/* Red highlight circle matching the user's screenshot */}
+              <div className="absolute inset-0 border-2 border-red-500 rounded pointer-events-none opacity-90 animate-pulse" style={{ transform: 'scale(1.2) rotate(-5deg)' }}></div>
+            </div>
+          </div>
+
+          {/* Name Field */}
+          <div className="flex justify-between items-center border-t border-slate-100 pt-0.5">
+            <div>
+              <span className="block text-slate-500 font-medium leading-none">Name</span>
+              <span className="block font-semibold text-slate-800 leading-normal">Gemini API Key 7</span>
+            </div>
+            <button className="p-0.5 text-slate-400">
+              <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4l3 3v4a2 2 0 01-2 2h-1M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex justify-between items-center pt-1.5 border-t border-slate-100 text-[6.5px] font-bold shrink-0">
+          <span className="text-red-500 hover:underline cursor-pointer">Delete the key</span>
+          <button className="bg-white hover:bg-slate-50 border border-slate-300 rounded px-1.5 py-0.5 text-slate-700 shadow-sm">
+            Copy the key
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const renderMathChildren = (children: React.ReactNode): React.ReactNode => {
   if (typeof children === 'string') {
     const processedText = children
@@ -43,6 +239,88 @@ const renderMathChildren = (children: React.ReactNode): React.ReactNode => {
   return children;
 };
 
+const parseMarkdownAndMath = (text: string) => {
+  if (!text) return { processedText: '', mathBlocks: [] as string[] };
+  
+  const mathBlocks: string[] = [];
+  
+  // 1. Extract block math $$ ... $$
+  let processedText = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+    const placeholder = `__BLOCK_MATH_${mathBlocks.length}__`;
+    mathBlocks.push(`$$${formula}$$`);
+    return placeholder;
+  });
+  
+  // 2. Extract \[ ... \]
+  processedText = processedText.replace(/\\\[([\s\S]*?)\\\]/g, (match, formula) => {
+    const placeholder = `__BLOCK_MATH_${mathBlocks.length}__`;
+    mathBlocks.push(`$$${formula}$$`);
+    return placeholder;
+  });
+
+  // 3. Extract inline math $ ... $
+  processedText = processedText.replace(/\$([^\$\n]+?)\$/g, (match, formula) => {
+    const placeholder = `__INLINE_MATH_${mathBlocks.length}__`;
+    mathBlocks.push(`$${formula}$`);
+    return placeholder;
+  });
+  
+  // 4. Extract \( ... \)
+  processedText = processedText.replace(/\\\(([\s\S]*?)\\\)/g, (match, formula) => {
+    const placeholder = `__INLINE_MATH_${mathBlocks.length}__`;
+    mathBlocks.push(`$${formula}$`);
+    return placeholder;
+  });
+
+  return { processedText, mathBlocks };
+};
+
+const renderTextWithMath = (text: string, mathBlocks: string[]): React.ReactNode => {
+  if (!text) return '';
+  
+  const regex = /__(BLOCK|INLINE)_MATH_(\d+)__/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = regex.exec(text)) !== null) {
+    const index = match.index;
+    const blockIdx = parseInt(match[2], 10);
+    
+    if (index > lastIndex) {
+      parts.push(text.substring(lastIndex, index));
+    }
+    
+    const mathContent = mathBlocks[blockIdx];
+    if (mathContent) {
+      parts.push(<Latex key={`math-${blockIdx}`}>{mathContent}</Latex>);
+    }
+    
+    lastIndex = regex.lastIndex;
+  }
+  
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+  
+  return parts.length > 0 ? <React.Fragment>{parts}</React.Fragment> : text;
+};
+
+const createMathRenderer = (mathBlocks: string[]) => {
+  const renderer = (children: React.ReactNode): React.ReactNode => {
+    if (typeof children === 'string') {
+      return renderTextWithMath(children, mathBlocks);
+    }
+    if (Array.isArray(children)) {
+      return children.map((child, idx) => (
+        <React.Fragment key={idx}>{renderer(child)}</React.Fragment>
+      ));
+    }
+    return children;
+  };
+  return renderer;
+};
+
 export default function TakeEssay() {
   const { essayId } = useParams<{ essayId: string }>();
   const { appUser } = useAuth();
@@ -53,20 +331,141 @@ export default function TakeEssay() {
   const [error, setError] = useState<string | null>(null); // For page load errors
   const [submitError, setSubmitError] = useState<string | null>(null); // For local submit/grading errors
   
-  const [text, setText] = useState('');
   const [images, setImages] = useState<string[]>([]);
-  const [studentApiKey, setStudentApiKey] = useState(() => {
-    return localStorage.getItem('student_gemini_api_key') || '';
-  });
   const [submission, setSubmission] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'ai' | 'submission' | 'solution'>('ai');
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [studentApiKey, setStudentApiKey] = useState<string>(() => {
+    return localStorage.getItem('student_gemini_api_key') || '';
+  });
+
+  const [isGrading, setIsGrading] = useState(false);
+  const [gradingError, setGradingError] = useState<string | null>(null);
+
   const handleApiKeyChange = (val: string) => {
     setStudentApiKey(val);
     localStorage.setItem('student_gemini_api_key', val);
+  };
+
+  const triggerGrading = async (subId: string, apiKey: string) => {
+    if (!subId || !essay) return;
+    setIsGrading(true);
+    setGradingError(null);
+    console.log('[TakeEssay] Starting grading for submission:', subId, 'with API key:', apiKey ? 'Custom' : 'Pool');
+    try {
+      const subRef = doc(db, 'essay_submissions', subId);
+      await updateDoc(subRef, {
+        status: 'grading',
+        studentApiKey: apiKey,
+        errorMsg: null
+      });
+
+      const res = await fetch('/api/grade-essay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submission: {
+            id: subId,
+            images: submission?.images || images,
+            text: submission?.text || ''
+          },
+          essay: essay,
+          studentApiKey: apiKey
+        })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Lỗi kết nối hoặc xử lý chấm điểm.');
+      }
+
+      const { aiFeedback, score } = await res.json();
+
+      const gradedData = {
+        aiFeedback: aiFeedback || 'Không nhận được đánh giá từ AI.',
+        score: typeof score === 'number' ? score : 0.0,
+        status: 'graded',
+        gradedAt: new Date().getTime(),
+        studentApiKey: apiKey,
+        errorMsg: null
+      };
+
+      await updateDoc(subRef, gradedData);
+
+      // Update student's completed essays
+      const userRef = doc(db, 'users', appUser.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        const completed = userData.completedEssays || [];
+        const updatedCompleted = completed.map((item: any) => {
+          if (item.essayId === essay.id) {
+            return {
+              ...item,
+              score: gradedData.score,
+              status: 'graded',
+              gradedAt: gradedData.gradedAt
+            };
+          }
+          return item;
+        });
+        await updateDoc(userRef, { completedEssays: updatedCompleted });
+      }
+
+      setSubmission((prev: any) => prev ? { ...prev, ...gradedData } : null);
+    } catch (err: any) {
+      console.error('[TakeEssay] Grading failed error:', err);
+      const errMsg = err.message || 'Lỗi không xác định.';
+      
+      const lowerMsg = errMsg.toLowerCase();
+      const isQuotaError = 
+        lowerMsg.includes('quota') || 
+        lowerMsg.includes('exhausted') || 
+        lowerMsg.includes('api_key_invalid') ||
+        lowerMsg.includes('api key not valid') ||
+        lowerMsg.includes('api key is invalid') ||
+        lowerMsg.includes('invalid api key') ||
+        lowerMsg.includes('permission_denied') ||
+        lowerMsg.includes('permission denied') ||
+        lowerMsg.includes('rate limit') ||
+        lowerMsg.includes('limit exceeded');
+
+      const errorStatus = isQuotaError ? 'key_error' : 'grading_failed';
+      const finalErrorMsg = isQuotaError 
+        ? `API Key của bạn đã hết lượt hoặc không hợp lệ. Chi tiết từ AI: ${errMsg}. Vui lòng tạo API mới và bấm vào chấm lại.`
+        : 'Gặp sự cố khi kết nối với AI: ' + errMsg;
+
+      const subRef = doc(db, 'essay_submissions', subId);
+      await updateDoc(subRef, {
+        status: errorStatus,
+        errorMsg: finalErrorMsg
+      });
+
+      // Update student's completed essays in user profile on error
+      const userRef = doc(db, 'users', appUser.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        const completed = userData.completedEssays || [];
+        const updatedCompleted = completed.map((item: any) => {
+          if (item.essayId === essay.id) {
+            return {
+              ...item,
+              status: errorStatus
+            };
+          }
+          return item;
+        });
+        await updateDoc(userRef, { completedEssays: updatedCompleted });
+      }
+
+      setSubmission((prev: any) => prev ? { ...prev, status: errorStatus, errorMsg: finalErrorMsg } : null);
+    } finally {
+      setIsGrading(false);
+    }
   };
 
   useEffect(() => {
@@ -96,7 +495,7 @@ export default function TakeEssay() {
           fetch('/api/ocr-images', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ images: data.solutionImages, type: 'teacher_solution' })
+            body: JSON.stringify({ images: data.solutionImages, type: 'teacher_solution', studentApiKey })
           })
           .then(res => res.json())
           .then(async (ocrRes) => {
@@ -119,6 +518,14 @@ export default function TakeEssay() {
         const subSnap = await getDocs(submissionsQuery);
         if (!subSnap.empty) {
           setSubmission({ id: subSnap.docs[0].id, ...subSnap.docs[0].data() });
+        } else {
+          // Cleanup dangling reference
+          const hasDangling = (appUser as any).completedEssays?.some((c: any) => c.essayId === essayId);
+          if (hasDangling) {
+            const userRef = doc(db, 'users', appUser.uid);
+            const newCompleted = ((appUser as any).completedEssays || []).filter((c: any) => c.essayId !== essayId);
+            await updateDoc(userRef, { completedEssays: newCompleted });
+          }
         }
       } catch (err: any) {
         setError(err.message);
@@ -129,6 +536,42 @@ export default function TakeEssay() {
     fetchEssayAndSubmission();
   }, [essayId, appUser]);
 
+  // Listen for real-time updates to the submission once submission ID is known
+  useEffect(() => {
+    if (!submission?.id) return;
+    
+    console.log('[TakeEssay] Subscribing to submission updates for ID:', submission.id);
+    const subRef = doc(db, 'essay_submissions', submission.id);
+    const unsubscribe = onSnapshot(subRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const updatedData = { id: snapshot.id, ...snapshot.data() };
+        setSubmission(updatedData);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [submission?.id]);
+
+  // Automatic grading resumption if page is opened or refreshed with "grading" status
+  useEffect(() => {
+    if (submission && submission.status === 'grading' && !isGrading && !isSubmitting) {
+      const apiKeyToUse = studentApiKey || submission.studentApiKey || '';
+      if (apiKeyToUse) {
+        console.log('[TakeEssay] Auto-triggering background grading...');
+        triggerGrading(submission.id, apiKeyToUse);
+      } else {
+        const updateStatus = async () => {
+          const subRef = doc(db, 'essay_submissions', submission.id);
+          await updateDoc(subRef, {
+            status: 'key_error',
+            errorMsg: 'Thiếu Gemini API Key để tiếp tục chấm bài.'
+          });
+        };
+        updateStatus().catch(err => console.error(err));
+      }
+    }
+  }, [submission?.status, essay, isSubmitting]);
+
   const processImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -138,8 +581,8 @@ export default function TakeEssay() {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1000; // Optimize dimensions for faster uploading and AI processing
-          const MAX_HEIGHT = 1000;
+          const MAX_WIDTH = 900; // Optimal width for clear math formulas and fast API responses
+          const MAX_HEIGHT = 900;
           let width = img.width;
           let height = img.height;
 
@@ -162,7 +605,13 @@ export default function TakeEssay() {
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.75); // Compress lightly to stay under API limits
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // Smart compression: 0.6 balance of clarity & size
+            
+            // Calculate size reduction ratio
+            const originalKb = (file.size / 1024).toFixed(1);
+            const compressedKb = (dataUrl.length * 0.75 / 1024).toFixed(1);
+            console.log(`[Smart Compression] File: ${file.name}, Original: ${originalKb} KB, Compressed: ${compressedKb} KB (Ratio: ${((Number(compressedKb) / Number(originalKb)) * 100).toFixed(1)}%)`);
+            
             resolve(dataUrl);
           } else {
             reject(new Error('Failed to create 2D canvas context'));
@@ -218,37 +667,45 @@ export default function TakeEssay() {
 
   const handleSubmit = async () => {
     if (!essay || !appUser) return;
-    if (!text.trim() && images.length === 0) {
-      setSubmitError('Vui lòng nhập văn bản lời giải hoặc tải lên ít nhất một hình ảnh bài viết.');
+    if (images.length === 0) {
+      setSubmitError('Vui lòng tải lên ít nhất một hình ảnh bài viết.');
       return;
     }
-    if (!studentApiKey.trim()) {
-      setSubmitError('Học sinh vui lòng nhập API key để chấm điểm.');
-      return;
-    }
-    
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      // Call AI Grading API
-      const res = await fetch('/api/grade-essay', {
+      // 1. Run OCR on student images using their API key
+      console.log('[TakeEssay] Running OCR on student work using provided API key...');
+      const ocrRes = await fetch('/api/ocr-images', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          submission: { text, images }, 
-          essay,
-          studentApiKey
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images, type: 'student_work', studentApiKey })
       });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Server không thể chấm bài tự luận tại thời điểm này.');
+      if (!ocrRes.ok) {
+        const errData = await ocrRes.json();
+        const errMsg = errData.error || '';
+        const lowerMsg = errMsg.toLowerCase();
+        const isKeyErr = 
+          lowerMsg.includes('quota') || 
+          lowerMsg.includes('exhausted') || 
+          lowerMsg.includes('api_key_invalid') ||
+          lowerMsg.includes('api key not valid') ||
+          lowerMsg.includes('api key is invalid') ||
+          lowerMsg.includes('invalid api key') ||
+          lowerMsg.includes('permission_denied') ||
+          lowerMsg.includes('permission denied') ||
+          lowerMsg.includes('rate limit') ||
+          lowerMsg.includes('limit exceeded');
+        if (isKeyErr) {
+          throw new Error(`API Key của bạn đã hết lượt hoặc không hợp lệ. Chi tiết từ AI: ${errMsg}. Vui lòng kiểm tra lại hoặc tạo API key mới.`);
+        } else {
+          throw new Error(errMsg || 'Lỗi nhận diện chữ viết tay (OCR).');
+        }
       }
 
-      const { aiFeedback, score } = await res.json();
+      const ocrData = await ocrRes.json();
+      const ocrText = ocrData.text || '';
 
       const submissionData = {
         essayId: essay.id,
@@ -256,12 +713,14 @@ export default function TakeEssay() {
         studentId: appUser.uid,
         studentName: appUser.name,
         studentClass: appUser.className,
-        text,
         images,
+        text: ocrText,
         submittedAt: new Date().toISOString(),
-        status: 'graded',
-        score,
-        aiFeedback
+        status: 'grading',
+        score: null,
+        aiFeedback: null,
+        studentApiKey,
+        errorMsg: null
       };
 
       const docRef = await addDoc(collection(db, 'essay_submissions'), submissionData);
@@ -271,7 +730,8 @@ export default function TakeEssay() {
         completedEssays: arrayUnion({
           essayId: essay.id,
           submissionId: docRef.id,
-          score,
+          score: null,
+          status: 'grading',
           submittedAt: submissionData.submittedAt
         })
       });
@@ -280,8 +740,7 @@ export default function TakeEssay() {
       setIsSubmitting(false);
     } catch (err: any) {
       console.error("Lỗi nộp bài tự luận:", err);
-      // We set local submitError so student does not lose their typed answer and loaded images!
-      setSubmitError(err.message || 'Lỗi từ server khi kết nối chấm bài AI. Vui lòng nhấn nút Nộp bài để thử lại.');
+      setSubmitError(err.message || 'Lỗi hệ thống. Vui lòng thử lại.');
       setIsSubmitting(false);
     }
   };
@@ -316,30 +775,35 @@ export default function TakeEssay() {
     );
   }
 
+  // Pre-process AI Feedback and Reference Solution for math rendering
+  const { processedText: processedAiFeedback, mathBlocks: aiFeedbackMathBlocks } = parseMarkdownAndMath(submission?.aiFeedback || '');
+  const renderAiFeedbackMath = createMathRenderer(aiFeedbackMathBlocks);
+
+  const { processedText: processedSolutionText, mathBlocks: solutionMathBlocks } = parseMarkdownAndMath(essay?.solutionText || '');
+  const renderSolutionMath = createMathRenderer(solutionMathBlocks);
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* HEADER BAR */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 md:h-20">
-            <div className="flex items-center space-x-3 overflow-hidden">
-              <button 
-                onClick={() => navigate('/student')} 
-                className="p-2 -ml-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors shrink-0"
-                title="Quay lại danh sách"
-              >
-                <ArrowLeft className="w-6 h-6" />
-              </button>
-              <div className="border-l border-slate-200 h-6 mx-1 shrink-0 hidden sm:block"></div>
-              <div className="truncate">
-                <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest block font-mono">BÀI TẬP TỰ LUẬN</span>
-                <h1 className="text-lg md:text-xl font-bold text-slate-900 leading-tight truncate">
-                  {essay.title}
-                </h1>
-              </div>
+          <div className="relative flex justify-between items-center h-16 md:h-20">
+            <button 
+              onClick={() => navigate('/student')} 
+              className="p-2 -ml-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors shrink-0 z-10"
+              title="Quay lại danh sách"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            
+            <div className="absolute inset-0 flex flex-col justify-center items-center pointer-events-none px-16">
+              <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-[0.2em] font-sans">BÀI TẬP TỰ LUẬN</span>
+              <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-tight">
+                {essay.title}
+              </h1>
             </div>
             
-            <div className="shrink-0 flex items-center space-x-2">
+            <div className="z-10 shrink-0 flex items-center space-x-2">
               <span className="text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full font-bold font-mono">
                 Lớp {appUser?.className}
               </span>
@@ -350,220 +814,311 @@ export default function TakeEssay() {
 
       {/* COMPLETED SUCCESS RESULT SCREEN */}
       {submission ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in zoom-in duration-500">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden mb-8">
-            <div className="bg-gradient-to-r from-indigo-900 via-indigo-850 to-indigo-800 p-8 text-white text-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
-              
-              <div className="relative z-10 space-y-4">
-                <div className="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30 transform hover:scale-105 transition-transform duration-300">
-                  <CheckCircle className="w-10 h-10" />
-                </div>
-                <h2 className="text-3xl font-black tracking-tight">Nộp & Chấm điểm thành công!</h2>
-                <p className="text-indigo-200 max-w-lg mx-auto font-medium">
-                  Bài làm của bạn đã được lưu trữ an toàn trong hệ thống và chấm điểm tự động bằng Giáo viên AI.
-                </p>
+        submission.status === 'grading' ? (
+          <div className="max-w-4xl mx-auto px-4 py-12 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden mb-8">
+              <div className="bg-gradient-to-r from-indigo-900 to-indigo-850 p-8 text-white text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
                 
-                {/* Score Section */}
-                <div className="inline-block bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl py-6 px-10 shadow-xl mt-4">
-                  <div className="text-xs font-bold text-indigo-200 uppercase tracking-widest mb-1 font-mono">Điểm số đạt được</div>
-                  <div className="text-5xl font-black text-emerald-400 drop-shadow-sm font-mono flex items-baseline justify-center">
-                    {submission.score?.toFixed(1) || '0.0'}
-                    <span className="text-2xl text-white/50 font-bold ml-1">/10</span>
+                <div className="relative z-10 space-y-4">
+                  <div className="w-20 h-20 bg-indigo-500 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-indigo-500/30 animate-pulse">
+                    <Loader2 className="w-10 h-10 animate-spin" />
+                  </div>
+                  <h2 className="text-3xl font-black tracking-tight">Thầy Trọng AI đang chấm bài...</h2>
+                  
+                  <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-2xl p-6 max-w-xl mx-auto mt-4 shadow-inner">
+                    <p className="text-indigo-100 font-medium leading-relaxed text-sm md:text-base">
+                      Thầy Trọng AI đã nhận được bài của em và đang chấm vui lòng trở lại sau ít phút.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6 md:p-8 space-y-6">
+                <div className="max-w-md mx-auto">
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 text-center">Tiến trình chấm bài</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3 bg-emerald-50 text-emerald-800 px-4 py-3 rounded-xl border border-emerald-100">
+                      <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+                      <span className="text-xs md:text-sm font-bold">1. Đã nộp bài giải lên hệ thống</span>
+                    </div>
+                    <div className="flex items-center space-x-3 bg-emerald-50 text-emerald-800 px-4 py-3 rounded-xl border border-emerald-100">
+                      <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+                      <span className="text-xs md:text-sm font-bold">2. Đã chuyển đổi chữ viết bằng công nghệ OCR</span>
+                    </div>
+                    <div className="flex items-center space-x-3 bg-indigo-50 text-indigo-800 px-4 py-3 rounded-xl border border-indigo-100">
+                      <Loader2 className="w-5 h-5 text-indigo-500 animate-spin shrink-0" />
+                      <span className="text-xs md:text-sm font-bold">3. Thầy Trọng AI đang phân tích & chấm điểm...</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-6 mt-6 max-w-xl mx-auto space-y-4">
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-center">
+                    <span className="text-xs text-slate-500 font-medium">Hệ thống đang xử lý chấm điểm bằng API Keys xoay vòng tự động.</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Content & Tab Panel */}
-            <div className="p-6 md:p-8">
-              <div className="flex border-b border-slate-200 mb-6 overflow-x-auto space-x-6 pb-px scrollbar-thin">
-                <button
-                  onClick={() => setActiveTab('ai')}
-                  className={`pb-4 text-sm font-bold flex items-center shrink-0 space-x-2 transition-all relative ${
-                    activeTab === 'ai' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Đánh giá chi tiết từ AI</span>
-                  {activeTab === 'ai' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full"></div>}
-                </button>
+            <div className="flex justify-center">
+              <button onClick={() => navigate('/student')} className="px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-xs transition-colors">
+                Quay lại Student Dashboard
+              </button>
+            </div>
+          </div>
+        ) : submission.status === 'key_error' || submission.status === 'grading_failed' ? (
+          <div className="max-w-4xl mx-auto px-4 py-12 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden mb-8">
+              <div className="bg-gradient-to-r from-rose-900 to-rose-800 p-8 text-white text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
                 
-                <button
-                  onClick={() => setActiveTab('submission')}
-                  className={`pb-4 text-sm font-bold flex items-center shrink-0 space-x-2 transition-all relative ${
-                    activeTab === 'submission' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>Bài làm của bạn</span>
-                  {activeTab === 'submission' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full"></div>}
-                </button>
-                
-                {((essay.solutionImages && essay.solutionImages.length > 0) || (essay.solutionText && essay.solutionText.trim() !== '')) && (
-                  <button
-                    onClick={() => setActiveTab('solution')}
-                    className={`pb-4 text-sm font-bold flex items-center shrink-0 space-x-2 transition-all relative ${
-                      activeTab === 'solution' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
-                    }`}
+                <div className="relative z-10 space-y-4">
+                  <div className="w-16 h-16 bg-white/10 text-white rounded-full flex items-center justify-center mx-auto shadow-inner">
+                    <AlertCircle className="w-8 h-8 text-rose-300" />
+                  </div>
+                  <h2 className="text-3xl font-black tracking-tight">Chấm điểm gặp sự cố</h2>
+                  <p className="text-rose-100 max-w-md mx-auto text-sm font-medium">
+                    {submission.errorMsg || 'Không thể kết nối đến máy chủ AI để chấm điểm.'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="p-6 md:p-8 space-y-6 max-w-xl mx-auto text-center">
+                <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                  Đừng lo lắng! Bài làm của em đã được nộp và lưu trữ an toàn trên hệ thống. Giáo viên có thể xem trực tiếp hoặc em có thể thử gửi yêu cầu chấm lại bằng hệ thống tự động bên dưới.
+                </p>
+
+                <div className="flex justify-center pt-2">
+                  <button 
+                    onClick={() => {
+                      triggerGrading(submission.id, '');
+                    }}
+                    disabled={isGrading}
+                    className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-bold rounded-2xl transition-all shadow-md shadow-indigo-100 hover:shadow-indigo-200"
                   >
-                    <BookOpen className="w-4 h-4" />
-                    <span>Đáp án tham khảo</span>
-                    {activeTab === 'solution' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full"></div>}
+                    {isGrading ? 'Đang gửi yêu cầu chấm lại...' : 'Thử chấm lại'}
                   </button>
-                )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <button onClick={() => navigate('/student')} className="px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-xs transition-colors">
+                Quay lại Student Dashboard
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in zoom-in duration-500">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden mb-8">
+              <div className="bg-gradient-to-r from-indigo-900 via-indigo-850 to-indigo-800 p-8 text-white text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
+                
+                <div className="relative z-10 space-y-4">
+                  <div className="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30 transform hover:scale-105 transition-transform duration-300">
+                    <CheckCircle className="w-10 h-10" />
+                  </div>
+                  <h2 className="text-3xl font-black tracking-tight">Nộp & Chấm điểm thành công!</h2>
+                  <p className="text-indigo-200 max-w-lg mx-auto font-medium">
+                    Bài làm của bạn đã được lưu trữ an toàn trong hệ thống và chấm điểm tự động bằng Giáo viên AI.
+                  </p>
+                  
+                  {/* Score Section */}
+                  <div className="inline-block bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl py-6 px-10 shadow-xl mt-4">
+                    <div className="text-xs font-bold text-indigo-200 uppercase tracking-widest mb-1 font-mono">Điểm số đạt được</div>
+                    <div className="text-5xl font-black text-emerald-400 drop-shadow-sm font-mono flex items-baseline justify-center">
+                      {submission.score?.toFixed(1) || '0.0'}
+                      <span className="text-2xl text-white/50 font-bold ml-1">/10</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Tab: AI Review */}
-              {activeTab === 'ai' && (
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-2">
-                    <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600 shrink-0">
-                      <Award className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-lg">Chi tiết nhận xét từ Giáo viên AI</h3>
-                      <p className="text-slate-400 text-xs">Hệ thống phân tích từng chi tiết lỗi sai và gợi ý sửa đổi cho bạn</p>
-                    </div>
-                  </div>
+              {/* Content & Tab Panel */}
+              <div className="p-6 md:p-8">
+                <div className="flex border-b border-slate-200 mb-6 overflow-x-auto space-x-6 pb-px scrollbar-thin">
+                  <button
+                    onClick={() => setActiveTab('ai')}
+                    className={`pb-4 text-sm font-bold flex items-center shrink-0 space-x-2 transition-all relative ${
+                      activeTab === 'ai' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Đánh giá chi tiết từ AI</span>
+                    {activeTab === 'ai' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full"></div>}
+                  </button>
                   
-                  <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 md:p-8 shadow-inner overflow-hidden">
-                    <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed">
-                      <ReactMarkdown
-                        components={{
-                          h1: ({node, children, ...props}) => <h1 className="text-xl font-bold text-slate-900 border-b border-slate-200 pb-2 mt-6 mb-3 flex items-center" {...props}>{renderMathChildren(children)}</h1>,
-                          h2: ({node, children, ...props}) => <h2 className="text-lg font-bold text-indigo-900 mt-5 mb-2 flex items-center" {...props}>{renderMathChildren(children)}</h2>,
-                          h3: ({node, children, ...props}) => <h3 className="text-md font-semibold text-slate-800 mt-4 mb-2" {...props}>{renderMathChildren(children)}</h3>,
-                          p: ({node, children, ...props}) => <p className="text-slate-600 mb-4 text-sm md:text-base leading-relaxed" {...props}>{renderMathChildren(children)}</p>,
-                          ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-2 text-slate-600 text-sm" {...props} />,
-                          ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 space-y-2 text-slate-600 text-sm" {...props} />,
-                          li: ({node, children, ...props}) => <li className="pl-1 mb-1 text-slate-600 leading-relaxed" {...props}>{renderMathChildren(children)}</li>,
-                          blockquote: ({node, children, ...props}) => (
-                            <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-slate-500 my-4 bg-indigo-50/50 py-2 rounded-r-xl" {...props}>{renderMathChildren(children)}</blockquote>
-                          ),
-                          code: ({node, ...props}) => <code className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-mono text-sm" {...props} />,
-                          pre: ({node, ...props}) => <pre className="bg-slate-900 text-slate-100 p-4 rounded-xl overflow-x-auto my-4 text-xs font-mono" {...props} />,
-                        }}
-                      >
-                        {submission.aiFeedback}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab: Student Submission */}
-              {activeTab === 'submission' && (
-                <div className="space-y-6">
-                  {submission.text && (
-                    <div className="space-y-2">
-                      <h4 className="font-bold text-slate-800 flex items-center text-sm">
-                        <FileText className="w-4 h-4 mr-2 text-slate-400" /> Nội dung văn bản đã nộp:
-                      </h4>
-                      <div className="p-5 bg-slate-50 rounded-2xl text-slate-700 whitespace-pre-wrap text-sm md:text-base border border-slate-200 font-sans leading-relaxed shadow-inner">
-                        {submission.text}
-                      </div>
-                    </div>
-                  )}
-
-                  {submission.images && submission.images.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-bold text-slate-800 flex items-center text-sm">
-                        <ImageIcon className="w-4 h-4 mr-2 text-slate-400" /> Hình ảnh lời giải đã nộp ({submission.images.length} ảnh):
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        {submission.images.map((img: string, idx: number) => (
-                          <div key={idx} className="bg-slate-50 rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col group hover:border-indigo-200 transition-all">
-                            <div className="relative aspect-[3/4] bg-white border-b border-slate-100 overflow-hidden">
-                              <img src={img} className="w-full h-full object-contain hover:scale-105 transition-transform duration-300" alt={`Bài làm ${idx + 1}`} />
-                            </div>
-                            <div className="p-3 text-center text-xs font-bold text-slate-500 bg-slate-50/50">
-                              Ảnh chụp lời giải {idx + 1}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  <button
+                    onClick={() => setActiveTab('submission')}
+                    className={`pb-4 text-sm font-bold flex items-center shrink-0 space-x-2 transition-all relative ${
+                      activeTab === 'submission' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Bài làm của bạn</span>
+                    {activeTab === 'submission' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full"></div>}
+                  </button>
+                  
+                  {((essay.solutionImages && essay.solutionImages.length > 0) || (essay.solutionText && essay.solutionText.trim() !== '')) && (
+                    <button
+                      onClick={() => setActiveTab('solution')}
+                      className={`pb-4 text-sm font-bold flex items-center shrink-0 space-x-2 transition-all relative ${
+                        activeTab === 'solution' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      <span>Đáp án tham khảo</span>
+                      {activeTab === 'solution' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full"></div>}
+                    </button>
                   )}
                 </div>
-              )}
 
-              {/* Tab: Reference Solution */}
-              {activeTab === 'solution' && (
-                <div className="space-y-6 animate-in fade-in duration-300">
-                  <div className="flex items-center space-x-2">
-                    <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600 shrink-0">
-                      <BookOpen className="w-5 h-5" />
+                {/* Tab: AI Review */}
+                {activeTab === 'ai' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600 shrink-0">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-800 text-lg">Chi tiết nhận xét từ Giáo viên AI</h3>
+                        <p className="text-slate-400 text-xs">Hệ thống phân tích từng chi tiết lỗi sai và gợi ý sửa đổi cho bạn</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-lg">Đáp án mẫu từ Giáo viên</h3>
-                      <p className="text-slate-400 text-xs">Đối chiếu bài giải của bạn với đáp án chính thức</p>
-                    </div>
-                  </div>
-
-                  {essay.solutionText && essay.solutionText.trim() !== '' && (
-                    <div className="bg-emerald-50/30 rounded-2xl border border-emerald-100 p-6 md:p-8 overflow-hidden">
-                      <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed font-sans">
+                    
+                    <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 md:p-8 shadow-inner overflow-hidden">
+                      <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed">
                         <ReactMarkdown
                           components={{
-                            h1: ({node, children, ...props}) => <h1 className="text-xl font-bold text-slate-900 border-b border-slate-200 pb-2 mt-6 mb-3 flex items-center" {...props}>{renderMathChildren(children)}</h1>,
-                            h2: ({node, children, ...props}) => <h2 className="text-lg font-bold text-indigo-900 mt-5 mb-2 flex items-center" {...props}>{renderMathChildren(children)}</h2>,
-                            h3: ({node, children, ...props}) => <h3 className="text-md font-semibold text-slate-800 mt-4 mb-2" {...props}>{renderMathChildren(children)}</h3>,
-                            p: ({node, children, ...props}) => <p className="text-slate-600 mb-4 text-sm md:text-base leading-relaxed" {...props}>{renderMathChildren(children)}</p>,
+                            h1: ({node, children, ...props}) => <h1 className="text-xl font-bold text-slate-900 border-b border-slate-200 pb-2 mt-6 mb-3 flex items-center" {...props}>{renderAiFeedbackMath(children)}</h1>,
+                            h2: ({node, children, ...props}) => <h2 className="text-lg font-bold text-indigo-900 mt-5 mb-2 flex items-center" {...props}>{renderAiFeedbackMath(children)}</h2>,
+                            h3: ({node, children, ...props}) => <h3 className="text-md font-semibold text-slate-800 mt-4 mb-2" {...props}>{renderAiFeedbackMath(children)}</h3>,
+                            p: ({node, children, ...props}) => <p className="text-slate-600 mb-4 text-sm md:text-base leading-relaxed" {...props}>{renderAiFeedbackMath(children)}</p>,
                             ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-2 text-slate-600 text-sm" {...props} />,
                             ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 space-y-2 text-slate-600 text-sm" {...props} />,
-                            li: ({node, children, ...props}) => <li className="pl-1 mb-1 text-slate-600 leading-relaxed" {...props}>{renderMathChildren(children)}</li>,
+                            li: ({node, children, ...props}) => <li className="pl-1 mb-1 text-slate-600 leading-relaxed" {...props}>{renderAiFeedbackMath(children)}</li>,
                             blockquote: ({node, children, ...props}) => (
-                              <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-slate-500 my-4 bg-indigo-50/50 py-2 rounded-r-xl" {...props}>{renderMathChildren(children)}</blockquote>
+                              <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-slate-500 my-4 bg-indigo-50/50 py-2 rounded-r-xl" {...props}>{renderAiFeedbackMath(children)}</blockquote>
                             ),
                             code: ({node, ...props}) => <code className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-mono text-sm" {...props} />,
                             pre: ({node, ...props}) => <pre className="bg-slate-900 text-slate-100 p-4 rounded-xl overflow-x-auto my-4 text-xs font-mono" {...props} />,
                           }}
                         >
-                          {essay.solutionText}
+                          {processedAiFeedback}
                         </ReactMarkdown>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {essay.solutionImages && essay.solutionImages.length > 0 && (!essay.solutionText || essay.solutionText.trim() === '') && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {essay.solutionImages.map((img: string, idx: number) => (
-                          <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
-                            <div className="relative aspect-[4/5] md:aspect-[3/4] bg-slate-50 flex items-center justify-center p-2 border-b border-slate-100">
-                              <img src={img} className="max-w-full max-h-full object-contain" alt={`Đáp án mẫu ${idx + 1}`} />
+                {/* Tab: Student Submission */}
+                {activeTab === 'submission' && (
+                  <div className="space-y-6">
+                    {submission.images && submission.images.length > 0 ? (
+                      <div className="space-y-3">
+                        <h4 className="font-bold text-slate-800 flex items-center text-sm">
+                          <ImageIcon className="w-4 h-4 mr-2 text-slate-400" /> Hình ảnh lời giải đã nộp ({submission.images.length} ảnh):
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                          {submission.images.map((img: string, idx: number) => (
+                            <div key={idx} className="bg-slate-50 rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col group hover:border-indigo-200 transition-all">
+                              <div className="relative aspect-[3/4] bg-white border-b border-slate-100 overflow-hidden">
+                                <img src={img} referrerPolicy="no-referrer" className="w-full h-full object-contain hover:scale-105 transition-transform duration-300" alt={`Bài làm ${idx + 1}`} />
+                              </div>
+                              <div className="p-3 text-center text-xs font-bold text-slate-500 bg-slate-50/50">
+                                Ảnh chụp lời giải {idx + 1}
+                              </div>
                             </div>
-                            <div className="p-3 text-center text-xs font-bold text-slate-600 bg-slate-50">
-                              Hình ảnh đáp án mẫu {idx + 1}
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-2 opacity-55" />
+                        <p className="text-slate-500 text-xs font-medium">Không có hình ảnh bài làm nào được tìm thấy.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tab: Reference Solution */}
+                {activeTab === 'solution' && (
+                  <div className="space-y-6 animate-in fade-in duration-300">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600 shrink-0">
+                        <BookOpen className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-800 text-lg">Đáp án mẫu từ Giáo viên</h3>
+                        <p className="text-slate-400 text-xs">Đối chiếu bài giải của bạn với đáp án chính thức</p>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {essay.solutionText && essay.solutionText.trim() !== '' && (
+                      <div className="bg-emerald-50/30 rounded-2xl border border-emerald-100 p-6 md:p-8 overflow-hidden">
+                        <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed font-sans">
+                          <ReactMarkdown
+                            components={{
+                              h1: ({node, children, ...props}) => <h1 className="text-xl font-bold text-slate-900 border-b border-slate-200 pb-2 mt-6 mb-3 flex items-center" {...props}>{renderSolutionMath(children)}</h1>,
+                              h2: ({node, children, ...props}) => <h2 className="text-lg font-bold text-indigo-900 mt-5 mb-2 flex items-center" {...props}>{renderSolutionMath(children)}</h2>,
+                              h3: ({node, children, ...props}) => <h3 className="text-md font-semibold text-slate-800 mt-4 mb-2" {...props}>{renderSolutionMath(children)}</h3>,
+                              p: ({node, children, ...props}) => <p className="text-slate-600 mb-4 text-sm md:text-base leading-relaxed" {...props}>{renderSolutionMath(children)}</p>,
+                              ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-2 text-slate-600 text-sm" {...props} />,
+                              ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 space-y-2 text-slate-600 text-sm" {...props} />,
+                              li: ({node, children, ...props}) => <li className="pl-1 mb-1 text-slate-600 leading-relaxed" {...props}>{renderSolutionMath(children)}</li>,
+                              blockquote: ({node, children, ...props}) => (
+                                <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-slate-500 my-4 bg-indigo-50/50 py-2 rounded-r-xl" {...props}>{renderSolutionMath(children)}</blockquote>
+                              ),
+                              code: ({node, ...props}) => <code className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-mono text-sm" {...props} />,
+                              pre: ({node, ...props}) => <pre className="bg-slate-900 text-slate-100 p-4 rounded-xl overflow-x-auto my-4 text-xs font-mono" {...props} />,
+                            }}
+                          >
+                            {processedSolutionText}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    )}
+
+                    {essay.solutionImages && essay.solutionImages.length > 0 && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          {essay.solutionImages.map((img: string, idx: number) => (
+                            <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
+                              <div className="relative aspect-[4/5] md:aspect-[3/4] bg-slate-50 flex items-center justify-center p-2 border-b border-slate-100">
+                                <img src={img} referrerPolicy="no-referrer" className="max-w-full max-h-full object-contain" alt={`Đáp án mẫu ${idx + 1}`} />
+                              </div>
+                              <div className="p-3 text-center text-xs font-bold text-slate-600 bg-slate-50">
+                                Hình ảnh đáp án mẫu {idx + 1}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Link
+                to="/student"
+                className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-100 hover:shadow-indigo-200 text-center flex items-center justify-center"
+              >
+                Quay lại Student Dashboard
+              </Link>
             </div>
           </div>
-
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link
-              to="/student"
-              className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-100 hover:shadow-indigo-200 text-center flex items-center justify-center"
-            >
-              Quay lại Student Dashboard
-            </Link>
-          </div>
-        </div>
+        )
       ) : (
         /* WORKSPACE / ESSAY TAKING ZONE */
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="flex flex-col gap-8">
             
-            {/* COLUMN 1: EXAM TOPIC (STICKY ON DESKTOP) */}
-            <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+            {/* COLUMN 1: EXAM TOPIC */}
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center">
                   <FileText className="w-5 h-5 mr-2 text-indigo-500" /> Đề bài tự luận
@@ -602,46 +1157,30 @@ export default function TakeEssay() {
             </div>
 
             {/* COLUMN 2: WORKSPACE */}
-            <div className="lg:col-span-7 space-y-6">
-              <h2 className="text-lg font-bold text-slate-800 flex items-center">
-                <Send className="w-5 h-5 mr-2 text-emerald-500" /> Không gian làm bài của bạn
+            <div className="space-y-6">
+              <h2 className="text-2xl font-black text-slate-900 flex items-center mb-2 tracking-tight">
+                <Send className="w-6 h-6 mr-3 text-emerald-500" /> Nộp bài làm
               </h2>
+              <p className="text-sm text-slate-500 font-medium mb-6">Tải lên hình ảnh bài làm để hệ thống chấm điểm tự động.</p>
               
-              <div className="bg-white rounded-[2rem] border border-slate-200 shadow-md p-6 md:p-8 space-y-6">
+              <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8 md:p-10 space-y-8">
                 
-                {/* Textarea Section */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <label className="block text-sm font-bold text-slate-700 flex items-center">
-                      <FileText className="w-4 h-4 mr-1.5 text-indigo-500" /> Nhập lời giải của bạn bằng văn bản:
-                    </label>
-                    <span className="text-xs text-slate-400 font-medium font-mono">{text.length} ký tự</span>
-                  </div>
-                  <textarea
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="Nhập câu trả lời hoặc trình bày lời giải chi tiết cho bài tập tự luận tại đây..."
-                    rows={9}
-                    className="w-full border-slate-200 rounded-2xl shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-slate-700 placeholder-slate-400 p-4 leading-relaxed text-sm md:text-base border-2"
-                  ></textarea>
-                </div>
-
                 {/* Upload Image Section */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-bold text-slate-700 flex items-center">
-                    <ImageIcon className="w-4 h-4 mr-1.5 text-indigo-500" /> Tải ảnh bài viết tay, vở nháp:
+                <div className="space-y-4">
+                  <label className="block text-sm font-black text-slate-900 flex items-center tracking-tight">
+                    <ImageIcon className="w-5 h-5 mr-2 text-indigo-500" /> Tải ảnh bài viết tay, vở nháp:
                   </label>
                   
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-4">
                     {images.map((img, idx) => (
-                      <div key={idx} className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-slate-200 shadow-sm group bg-slate-50 flex items-center justify-center p-1.5 hover:border-rose-400 transition-all">
+                      <div key={idx} className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm group bg-slate-50 flex items-center justify-center p-1 hover:border-indigo-400 transition-all">
                         <img src={img} className="max-w-full max-h-full object-contain rounded-xl" alt={`Bài làm ${idx + 1}`} />
-                        <div className="absolute top-1.5 left-1.5 bg-slate-900/60 backdrop-blur-md text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/10 z-10">
+                        <div className="absolute top-2 left-2 bg-slate-900/70 backdrop-blur-md text-white font-mono text-[11px] font-black px-2 py-0.5 rounded-lg border border-white/10 z-10">
                           Ảnh {idx + 1}
                         </div>
                         <button 
                           onClick={() => removeImage(idx)}
-                          className="absolute top-1.5 right-1.5 p-1.5 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 hover:bg-rose-600 transition-all shadow-md z-10"
+                          className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 hover:bg-rose-600 transition-all shadow-md z-10"
                           title="Xóa hình ảnh"
                         >
                           <X className="w-4 h-4" />
@@ -655,15 +1194,15 @@ export default function TakeEssay() {
                       onDragOver={handleDrag}
                       onDragLeave={handleDrag}
                       onDrop={handleDrop}
-                      className={`aspect-[3/4] flex flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all p-4 ${
+                      className={`aspect-[3/4] flex flex-col items-center justify-center rounded-2xl border-4 border-dashed transition-all p-4 ${
                         dragActive 
                           ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 scale-[0.98]' 
                           : 'border-slate-300 bg-slate-50 hover:border-indigo-500 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600'
                       }`}
                     >
-                      <Upload className="w-8 h-8 text-indigo-400 mb-2 animate-bounce" />
-                      <span className="text-xs md:text-sm font-bold block text-center">Thêm ảnh</span>
-                      <span className="text-[10px] text-slate-400 block text-center mt-1">Kéo thả hoặc nhấp chọn</span>
+                      <Upload className="w-10 h-10 text-indigo-400 mb-3 animate-bounce" />
+                      <span className="text-sm font-black block text-center">Thêm ảnh</span>
+                      <span className="text-[11px] text-slate-400 font-medium block text-center mt-1">Kéo thả hoặc nhấp chọn</span>
                     </button>
                     
                     <input 
@@ -674,38 +1213,6 @@ export default function TakeEssay() {
                       multiple 
                       onChange={(e) => handleImageUpload(e.target.files)} 
                     />
-                  </div>
-                </div>
-
-                {/* Gemini API Key Section */}
-                <div className="bg-blue-50/40 rounded-3xl p-5 border border-blue-100 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="flex items-center space-x-2 text-blue-900 font-bold text-sm">
-                    <Sparkles className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>Cung cấp Gemini API Key để chấm điểm</span>
-                  </div>
-                  <p className="text-xs text-blue-800 font-medium leading-relaxed">
-                    Học sinh vui lòng nhập API key để chấm điểm. Key này chỉ được lưu trữ an toàn trong trình duyệt của bạn và dùng để chấm bài tự luận trực tiếp.
-                  </p>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      value={studentApiKey}
-                      onChange={(e) => handleApiKeyChange(e.target.value)}
-                      placeholder="Nhập Gemini API Key của bạn (bắt đầu bằng AIzaSy...)"
-                      className="w-full border-blue-200 focus:border-indigo-500 focus:ring-indigo-500 text-slate-800 placeholder-slate-400 p-3.5 pr-10 rounded-2xl text-sm border-2 bg-white font-mono transition-all"
-                    />
-                    <Sparkles className="w-4 h-4 text-blue-400 absolute right-3.5 top-4" />
-                  </div>
-                  <div className="pt-1 bg-gradient-to-r from-blue-50 to-indigo-50/30 rounded-xl p-2.5 border border-blue-100/50">
-                    <a 
-                      href="https://aistudio.google.com/app/apikey" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800 font-extrabold hover:underline transition-all"
-                    >
-                      💡 Nhấp vào đây để lấy Gemini API Key miễn phí từ Google AI Studio
-                      <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-                    </a>
                   </div>
                 </div>
 
@@ -727,18 +1234,18 @@ export default function TakeEssay() {
                 <div className="pt-4 border-t border-slate-100">
                   <button
                     onClick={handleSubmit}
-                    disabled={isSubmitting || (!text.trim() && images.length === 0)}
-                    className="w-full flex justify-center items-center px-6 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:shadow-indigo-200 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                    disabled={isSubmitting || (images.length === 0)}
+                    className="w-full flex justify-center items-center px-6 py-5 bg-indigo-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:shadow-2xl hover:shadow-indigo-200 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                   >
                     {isSubmitting ? (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-3">
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Đang chấm bài bằng Giáo viên AI (Khoảng 10-15 giây)...</span>
+                        <span className="font-black">Đang chấm bài bằng Giáo viên AI...</span>
                       </div>
                     ) : (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-3">
                         <Send className="w-5 h-5" />
-                        <span>Nộp bài & Chấm Điểm AI</span>
+                        <span className="font-black">Nộp bài & Chấm Điểm AI</span>
                       </div>
                     )}
                   </button>

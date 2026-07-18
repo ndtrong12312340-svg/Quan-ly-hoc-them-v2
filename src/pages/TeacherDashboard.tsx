@@ -372,60 +372,69 @@ export default function TeacherDashboard() {
     
     if (appUser?.uid) {
       const summaryRef = doc(db, 'teacher_summaries', appUser.uid);
-      const unsubscribe = onSnapshot(summaryRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          let examsList = data.exams || [];
-          let knowledgesList = data.knowledges || [];
-          
-          examsList.sort((a: any, b: any) => {
-            const titleA = a.title || '';
-            const titleB = b.title || '';
-            const matchA = titleA.match(/\d+/);
-            const matchB = titleB.match(/\d+/);
-            if (matchA && matchB) {
-              const numA = parseInt(matchA[0], 10);
-              const numB = parseInt(matchB[0], 10);
-              if (numA !== numB) return numA - numB;
-            }
-            return titleA.localeCompare(titleB);
-          });
-          
-          knowledgesList.sort((a: any, b: any) => {
-            const blockA = parseInt(a.block || '0', 10);
-            const blockB = parseInt(b.block || '0', 10);
-            if (blockA !== blockB) return blockA - blockB;
-            const titleA = a.title || '';
-            const titleB = b.title || '';
-            const getChapter = (title: string) => {
-              const match = title.match(/chương\s*(\d+|[IVXLCDM]+)/i);
-              if (!match) return 0;
-              const val = match[1].toUpperCase();
-              if (/^\d+$/.test(val)) return parseInt(val, 10);
-              const romanMap: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
-              let result = 0;
-              for (let i = 0; i < val.length; i++) {
-                const current = romanMap[val[i]];
-                const next = romanMap[val[i + 1]];
-                if (next && current < next) {
-                  result += next - current;
-                  i++;
-                } else {
-                  result += current;
-                }
+      const unsubscribe = onSnapshot(
+        summaryRef, 
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            let examsList = data.exams || [];
+            let knowledgesList = data.knowledges || [];
+            
+            examsList.sort((a: any, b: any) => {
+              const titleA = a.title || '';
+              const titleB = b.title || '';
+              const matchA = titleA.match(/\d+/);
+              const matchB = titleB.match(/\d+/);
+              if (matchA && matchB) {
+                const numA = parseInt(matchA[0], 10);
+                const numB = parseInt(matchB[0], 10);
+                if (numA !== numB) return numA - numB;
               }
-              return result;
-            };
-            const chapterA = getChapter(titleA);
-            const chapterB = getChapter(titleB);
-            if (chapterA !== chapterB) return chapterA - chapterB;
-            return titleA.localeCompare(titleB, 'vi', { numeric: true, sensitivity: 'base' });
-          });
-          
-          setExams(examsList);
-          setKnowledges(knowledgesList);
+              return titleA.localeCompare(titleB);
+            });
+            
+            knowledgesList.sort((a: any, b: any) => {
+              const blockA = parseInt(a.block || '0', 10);
+              const blockB = parseInt(b.block || '0', 10);
+              if (blockA !== blockB) return blockA - blockB;
+              const titleA = a.title || '';
+              const titleB = b.title || '';
+              const getChapter = (title: string) => {
+                const match = title.match(/chương\s*(\d+|[IVXLCDM]+)/i);
+                if (!match) return 0;
+                const val = match[1].toUpperCase();
+                if (/^\d+$/.test(val)) return parseInt(val, 10);
+                const romanMap: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+                let result = 0;
+                for (let i = 0; i < val.length; i++) {
+                  const current = romanMap[val[i]];
+                  const next = romanMap[val[i + 1]];
+                  if (next && current < next) {
+                    result += next - current;
+                    i++;
+                  } else {
+                    result += current;
+                  }
+                }
+                return result;
+              };
+              const chapterA = getChapter(titleA);
+              const chapterB = getChapter(titleB);
+              if (chapterA !== chapterB) return chapterA - chapterB;
+              return titleA.localeCompare(titleB, 'vi', { numeric: true, sensitivity: 'base' });
+            });
+            
+            setExams(examsList);
+            setKnowledges(knowledgesList);
+          }
+        },
+        (error) => {
+          console.error("Firestore summary onSnapshot error:", error);
+          if (error.code === 'resource-exhausted') {
+            setError('Hệ thống đang quá tải (vượt quá giới hạn truy cập). Bảng điều khiển có thể không cập nhật theo thời gian thực.');
+          }
         }
-      });
+      );
       return () => unsubscribe();
     }
   }, [appUser?.uid]);

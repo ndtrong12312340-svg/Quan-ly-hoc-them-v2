@@ -31,6 +31,7 @@ interface AuthContextType {
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  refreshAppUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -39,6 +40,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   loginWithGoogle: async () => {},
   logout: async () => {},
+  refreshAppUser: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -47,6 +49,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const refreshAppUser = async () => {
+    if (!user) return;
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists()) {
+        setAppUser(userDoc.data() as AppUser);
+      }
+    } catch (err) {
+      console.error("Error refreshing appUser:", err);
+    }
+  };
 
   useEffect(() => {
     let unsubsUserDoc: () => void;
@@ -57,34 +72,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const userDocRef = doc(db, 'users', firebaseUser.uid);
           
-          unsubsUserDoc = onSnapshot(userDocRef, async (userDoc) => {
-            if (userDoc.exists()) {
-              setAppUser(userDoc.data() as AppUser);
-              setLoading(false);
-            } else {
-              // Check if a teacher already exists
-              const q = query(collection(db, 'users'), where('role', '==', 'teacher'));
-              const querySnapshot = await getDocs(q);
-              
-              if (querySnapshot.empty) {
-                const newUser: AppUser = {
-                  uid: firebaseUser.uid,
-                  email: firebaseUser.email || '',
-                  role: 'teacher',
-                  name: firebaseUser.displayName || 'Giáo viên',
-                  createdAt: new Date().toISOString(),
-                };
-                await setDoc(userDocRef, newUser);
-                // The snapshot will trigger again with the new doc
-              } else {
-                // Teacher already exists, and this new Google user is not in DB.
-                await signOut(auth);
-                setAppUser(null);
-                setUser(null);
+          unsubsUserDoc = onSnapshot(
+            userDocRef, 
+            async (userDoc) => {
+              if (userDoc.exists()) {
+                setAppUser(userDoc.data() as AppUser);
                 setLoading(false);
+              } else {
+                // Check if a teacher already exists
+                const q = query(collection(db, 'users'), where('role', '==', 'teacher'));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                  const newUser: AppUser = {
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email || '',
+                    role: 'teacher',
+                    name: firebaseUser.displayName || 'Giáo viên',
+                    createdAt: new Date().toISOString(),
+                  };
+                  await setDoc(userDocRef, newUser);
+                  // The snapshot will trigger again with the new doc
+                } else {
+                  // Teacher already exists, and this new Google user is not in DB.
+                  await signOut(auth);
+                  setAppUser(null);
+                  setUser(null);
+                  setLoading(false);
+                }
               }
+            },
+            (error) => {
+              console.error("Firestore onSnapshot error:", error);
+              // Handle quota exceeded gracefully without crashing the app
+              if (error.code === 'resource-exhausted') {
+                console.warn("Firestore quota exceeded. Falling back to limited functionality.");
+              }
+              setLoading(false);
             }
-          });
+          );
           
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -132,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, appUser, loading, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, appUser, loading, loginWithGoogle, logout, refreshAppUser }}>
       {children}
     </AuthContext.Provider>
   );

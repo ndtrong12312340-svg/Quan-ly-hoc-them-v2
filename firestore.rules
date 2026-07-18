@@ -44,7 +44,7 @@ service cloud.firestore {
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              (!('className' in data) || (data.className is string && data.className.size() < 150)) &&
              (!('phone' in data) || (data.phone is string && data.phone.size() <= 20)) &&
-             data.createdAt is string;
+             (!('createdAt' in data) || data.createdAt is string);
     }
 
     function isValidExam(data) {
@@ -91,7 +91,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && isValidUser(request.resource.data) && 
                     (isOwner(userId) || isTeacher()) &&
                     request.resource.data.uid == resource.data.uid &&
-                    request.resource.data.createdAt == resource.data.createdAt;
+                    (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt);
                     
       allow delete: if isTeacher();
     }

@@ -5,10 +5,10 @@ import { fetchClassDataDirectly } from '../lib/syncUtils';
 import { collection, query, where, getDocs, getDoc, doc, updateDoc } from 'firebase/firestore';
 import { PenTool } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { LogOut, PlayCircle, CheckCircle, RefreshCw, MessageCircle, AlertCircle, BookOpen, User, Calendar, Settings, LayoutDashboard, Database, FileText } from 'lucide-react';
+import { LogOut, PlayCircle, CheckCircle, Loader2, RefreshCw, MessageCircle, AlertCircle, BookOpen, User, Calendar, Settings, LayoutDashboard, Database, FileText } from 'lucide-react';
 
 export default function StudentDashboard() {
-  const { appUser, logout } = useAuth();
+  const { appUser, logout, refreshAppUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'knowledge' | 'exams' | 'essays'>('profile');
   
   const [exams, setExams] = useState<any[]>([]);
@@ -159,12 +159,20 @@ export default function StudentDashboard() {
     }
   }, [activeTab, appUser?.uid, appUser?.className]);
 
-  const handleRefresh = () => {
-    if (activeTab === 'knowledge' || activeTab === 'exams') {
-      setHasFetchedSummary(false);
-      setTimeout(() => {
-        fetchClassSummary(true);
-      }, 0);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshAppUser();
+      if (activeTab === 'knowledge' || activeTab === 'exams' || activeTab === 'essays') {
+        setHasFetchedSummary(false);
+        setTimeout(() => {
+          fetchClassSummary(activeTab === 'essays');
+        }, 50);
+      }
+    } catch (err) {
+      console.error("Lỗi khi tải lại dữ liệu:", err);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -537,7 +545,10 @@ export default function StudentDashboard() {
                     {essays.map((essay) => {
                       const isAvailable = !essay.startTime || new Date(essay.startTime) <= new Date();
                       const isEnded = essay.endTime && new Date(essay.endTime) < new Date();
-                      const hasSubmitted = (appUser as any)?.completedEssays?.some((s: any) => s.essayId === essay.id);
+                      const submissionInfo = (appUser as any)?.completedEssays?.find((s: any) => s.essayId === essay.id);
+                      const hasSubmitted = !!submissionInfo;
+                      const isGraded = submissionInfo && (submissionInfo.status === 'graded' || (submissionInfo.score !== undefined && submissionInfo.score !== null));
+                      const isKeyError = submissionInfo && submissionInfo.status === 'key_error';
                       
                       return (
                         <li key={essay.id} className="hover:bg-blue-50/50 transition-colors duration-150">
@@ -564,15 +575,31 @@ export default function StudentDashboard() {
                             <div className="flex items-center space-x-4">
                               {hasSubmitted ? (
                                 <div className="flex flex-col items-end">
-                                  <div className="flex items-center text-emerald-600 font-semibold text-sm mb-2 bg-emerald-50 px-3 py-1 rounded-full">
-                                    <CheckCircle className="w-4 h-4 mr-1.5" />
-                                    Đã hoàn thành
+                                  <div className={`flex items-center font-semibold text-sm mb-2 px-3 py-1 rounded-full ${
+                                    isGraded 
+                                      ? 'text-emerald-600 bg-emerald-50' 
+                                      : isKeyError 
+                                        ? 'text-rose-600 bg-rose-50' 
+                                        : 'text-amber-600 bg-amber-50'
+                                  }`}>
+                                    {isGraded ? (
+                                      <CheckCircle className="w-4 h-4 mr-1.5" />
+                                    ) : isKeyError ? (
+                                      <AlertCircle className="w-4 h-4 mr-1.5 text-rose-500" />
+                                    ) : (
+                                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                                    )}
+                                    {isGraded 
+                                      ? `Đã chấm điểm (${submissionInfo.score?.toFixed(1) || '0.0'}/10)` 
+                                      : isKeyError 
+                                        ? 'Lỗi API Key (Bấm vào sửa)' 
+                                        : 'Đang chấm bài...'}
                                   </div>
                                   <Link
                                     to={`/student/essay/${essay.id}`}
                                     className="inline-flex items-center px-5 py-2.5 border border-gray-200 shadow-sm text-sm font-semibold rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all transform hover:-translate-y-0.5"
                                   >
-                                    Xem kết quả
+                                    {isGraded ? 'Xem kết quả' : isKeyError ? 'Sửa API Key' : 'Xem tiến trình'}
                                   </Link>
                                 </div>
                               ) : (

@@ -112,7 +112,21 @@ export default function ExamResults() {
     if (!submissionToDelete || !exam) return;
     setIsDeleting(true);
     try {
+      const subToRemove = submissions.find(s => s.id === submissionToDelete);
+      
       await deleteDoc(doc(db, 'submissions', submissionToDelete));
+      
+      if (subToRemove && subToRemove.studentId) {
+        const userRef = doc(db, 'users', subToRemove.studentId);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.completedExams) {
+            const newCompletedExams = userData.completedExams.filter((c: any) => c.examId !== exam.id);
+            await updateDoc(userRef, { completedExams: newCompletedExams });
+          }
+        }
+      }
       
       // Also remove from exam's submissionSummary
       if (exam.submissionSummary) {
