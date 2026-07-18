@@ -53,6 +53,7 @@ async function startServer() {
     const base64Data = match[2].trim();
 
     let prompt = "";
+    // ... (prompt definition remains the same)
     if (imageType === "teacher_solution") {
       prompt = `Bạn là chuyên gia OCR toán học. Hãy đọc và gõ lại CHÍNH XÁC nội dung đáp án trong hình ảnh.
 Nhiệm vụ: Chuyển đổi hình ảnh đáp án của giáo viên thành văn bản.
@@ -171,7 +172,7 @@ Chỉ trả về nội dung đã OCR.`;
           }
         }
         
-        const backoffTime = Math.pow(2, attempt) * 1000;
+        const backoffTime = Math.pow(2, attempt) * 200; // Reduced from 1000 to 200
         await new Promise(r => setTimeout(r, backoffTime));
       }
     }
@@ -258,8 +259,8 @@ Chỉ trả về nội dung đã OCR.`;
           const ocrResults: string[] = [];
           for (let i = 0; i < essay.assignmentImages.length; i++) {
             if (i > 0) {
-              console.log(`[AI Grading Pipeline] Nghỉ 1.2s trước ảnh đề bài thứ ${i + 1}...`);
-              await sleep(1200);
+              console.log(`[AI Grading Pipeline] Nghỉ 300ms trước ảnh đề bài thứ ${i + 1}...`);
+              await sleep(300);
             }
             const text = await runOCR(studentApiKey, essay.assignmentImages[i], 'general');
             ocrResults.push(text);
@@ -278,8 +279,8 @@ Chỉ trả về nội dung đã OCR.`;
           const ocrResults: string[] = [];
           for (let i = 0; i < essay.solutionImages.length; i++) {
             if (i > 0) {
-              console.log(`[AI Grading Pipeline] Nghỉ 1.2s trước ảnh đáp án thứ ${i + 1}...`);
-              await sleep(1200);
+              console.log(`[AI Grading Pipeline] Nghỉ 300ms trước ảnh đáp án thứ ${i + 1}...`);
+              await sleep(300);
             }
             const text = await runOCR(studentApiKey, essay.solutionImages[i], 'teacher_solution');
             ocrResults.push(text);
@@ -303,8 +304,8 @@ Chỉ trả về nội dung đã OCR.`;
           const ocrResults: string[] = [];
           for (let i = 0; i < submission.images.length; i++) {
             if (i > 0) {
-              console.log(`[AI Grading Pipeline] Nghỉ 1.2s trước ảnh bài làm thứ ${i + 1}...`);
-              await sleep(1200);
+              console.log(`[AI Grading Pipeline] Nghỉ 300ms trước ảnh bài làm thứ ${i + 1}...`);
+              await sleep(300);
             }
             const text = await runOCR(studentApiKey, submission.images[i], 'student_work');
             ocrResults.push(text);
@@ -319,8 +320,8 @@ Chỉ trả về nội dung đã OCR.`;
       }
 
       // 4. Tiến hành chấm điểm chi tiết bằng prompt giáo viên toán học chuyên nghiệp
-      console.log("[AI Grading Pipeline] Đang chờ 1.5s để làm mát API key trước khi chấm điểm...");
-      await sleep(1500);
+      console.log("[AI Grading Pipeline] Đang chờ 500ms để làm mát API key trước khi chấm điểm...");
+      await sleep(500);
       console.log("[AI Grading Pipeline] Tiến hành chấm điểm so sánh...");
       const gradingPrompt = `Bạn là GIÁO VIÊN TOÁN HỌC CHUYÊN NGHIỆP với 20 năm kinh nghiệm chấm bài.
 Nhiệm vụ: CHẤM BÀI TOÁN bằng cách so sánh chi tiết bài làm học sinh với đáp án chuẩn.
