@@ -154,8 +154,16 @@ export default function EssayResults() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Lỗi từ server');
+        let errorMsg = 'Lỗi không xác định từ server';
+        try {
+          const data = await res.json();
+          errorMsg = data.error || errorMsg;
+        } catch (e) {
+          // If we can't parse JSON, try to get text
+          const text = await res.text();
+          errorMsg = text || `Server error: ${res.status}`;
+        }
+        throw new Error(errorMsg);
       }
 
       const { aiFeedback, score } = await res.json();

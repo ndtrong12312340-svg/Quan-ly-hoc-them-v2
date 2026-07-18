@@ -378,7 +378,7 @@ LƯU Ý CUỐI:
       let attempt = 0;
       let currentApiKeyToUse = studentApiKey?.trim();
       const poolSize = GEMINI_API_KEYS_POOL.length;
-      const maxRetries = (currentApiKeyToUse ? 3 : 0) + (poolSize > 0 ? poolSize : 3); // 3 for student key, plus poolSize or 3 fallback attempts
+      const maxRetries = (currentApiKeyToUse ? 1 : 0) + (poolSize > 0 ? 1 : 2); // Reduced retries for faster failure/success on serverless
       
       while (attempt < maxRetries) {
         try {
@@ -427,7 +427,7 @@ LƯU Ý CUỐI:
             }
           }
           
-          const backoffTime = Math.pow(2, attempt) * 1000;
+          const backoffTime = Math.pow(2, attempt) * 500; // Faster backoff
           await new Promise(r => setTimeout(r, backoffTime));
         }
       }
